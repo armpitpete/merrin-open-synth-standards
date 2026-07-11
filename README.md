@@ -13,6 +13,20 @@ They are not presented as universal law. They are working standards for builders
 | [MERRIN-STD-SLS-1](standards/MERRIN-STD-SLS-1_State_Lantern_System.md) | State Lantern System | What does this light mean? | Draft |
 | [MERRIN-STD-HIL-1](standards/MERRIN-STD-HIL-1_Human_Interface_Layout.md) | Human Interface Layout | Where should this control, jack, LED, or performance area go? | Draft |
 
+## Examples
+
+| Example | Use |
+|---|---|
+| [Eurorack module example](examples/eurorack-module-example.md) | Shows SLS-1 and HIL-1 on a compact patchable module. |
+| [Desktop controller example](examples/desktop-controller-example.md) | Shows hands-first layout, rear patching, and state-light placement. |
+| [Browser synth example](examples/browser-synth-example.md) | Shows how the standards apply to Web Audio and HTML/CSS interfaces. |
+
+## Repository files
+
+- [Changelog](CHANGELOG.md)
+- [Licence](LICENSE.md)
+- [Notice](NOTICE.md)
+
 ## Core idea
 
 Synths are not only circuits and code. They are also physical and visual decision systems.
