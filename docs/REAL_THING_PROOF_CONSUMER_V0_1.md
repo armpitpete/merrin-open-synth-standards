@@ -41,13 +41,15 @@ Future non-Draft maturity claims use a companion JSON record at:
 
 `evidence/maturity/<standard_id>.json`
 
+Every sidecar must bind to the exact `standard_id`, exact standard `version`, and claimed `status`. Evidence from an older version cannot silently carry a later version's maturity claim.
+
 The repository validator checks only what can be checked mechanically. Human review still has to judge whether evidence genuinely exercises the claimed environment.
 
 ### Freeze Candidate
 
 A companion record must identify:
 
-- the exact `standard_id` and `status`;
+- the exact `standard_id`, `version` and `status`;
 - at least one bounded implementation or use evidence item;
 - an evidence-backed review decision accepting the current status.
 
@@ -57,17 +59,18 @@ A Freeze Candidate can still be awaiting broader or player-facing real use. The 
 
 A companion record must identify:
 
-- the exact `standard_id` and `status`;
+- the exact `standard_id`, `version` and `status`;
 - at least two distinct implementation contexts;
 - an evidence pointer for each implementation;
+- `successful_use: true` for each implementation context;
 - an explicit declaration that each item is intended as an independent implementation context;
 - an evidence-backed review decision accepting `Stable`.
 
-The mechanical declaration is not proof of independence by itself. Review must reject duplicated, derivative or proxy contexts that do not satisfy the actual claim.
+The mechanical declarations are not proof of successful use or independence by themselves. Review must inspect the evidence and reject failed, duplicated, derivative or proxy contexts that do not satisfy the actual claim.
 
 ### Deprecated
 
-A companion record must identify the reason for deprecation and an evidence-backed review decision. A replacement may be named where one exists.
+A companion record must identify the exact version, the reason for deprecation and an evidence-backed review decision. A replacement may be named where one exists.
 
 ## Public summary consistency
 
