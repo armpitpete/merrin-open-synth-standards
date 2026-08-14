@@ -1,0 +1,39 @@
+name: Validate Real-Thing Proof
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify pinned canonical validator identity
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          path = Path("vendor/merrin-project-controls/7bc8b7f5ef921851ad163093f089d28d8128bf6c/validate_project_status.py")
+          data = path.read_bytes()
+          blob = hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest()
+          assert blob == "d0e704ab42d72da6b66fb1d9f31d739ed6220abd", blob
+          PY
+      - name: Run pinned canonical Project Status validator
+        run: python vendor/merrin-project-controls/7bc8b7f5ef921851ad163093f089d28d8128bf6c/validate_project_status.py project-status.json
+      - name: Validate current standard maturity claims
+        run: python scripts/validate_standard_maturity.py .
+      - name: Run maturity regression tests
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Check pull-request whitespace
+        if: github.event_name == 'pull_request'
+        run: git diff --check origin/main...HEAD
