@@ -74,6 +74,21 @@ Use the repository's established status language:
 
 A proposal normally moves one status at a time. Status is evidence about maturity, not a measure of importance.
 
+### Maturity is not repository lifecycle
+
+The maturity status above belongs to an individual standard. It must not be inferred from the repository's own lifecycle state.
+
+In particular:
+
+- a commit, pull-request merge, CI pass or publication on `main` can prove repository events but cannot by itself make a standard `Freeze Candidate` or `Stable`;
+- `Freeze Candidate` requires direct bounded real-use evidence plus review appropriate to the claimed status;
+- `Stable` requires successful use across multiple independent instrument or implementation contexts plus evidence-backed review;
+- documentation can define player, accessibility, safety or physical requirements but cannot prove those requirements work in the real implementation;
+- automated checks are supporting evidence and cannot substitute for human/player evidence where the claim concerns a human or physical surface;
+- publication does not mean universal adoption, endorsement or implementation.
+
+Future non-Draft maturity claims must provide the companion evidence record defined in `docs/REAL_THING_PROOF_CONSUMER_V0_1.md` at `evidence/maturity/<standard_id>.json`. The mechanical validator checks the minimum structure; review remains responsible for deciding whether the evidence really exercises the claimed environment and whether purported implementation contexts are genuinely independent.
+
 ## 6. Versioning and compatibility
 
 Each accepted standard must have a stable identifier and explicit version.
