@@ -30,6 +30,15 @@ license: CC-BY-4.0
 """
 
 
+def write_readme(root: Path, standard_id: str, status: str) -> None:
+    (root / "README.md").write_text(
+        "| Standard | Title | What it answers | Status |\n"
+        "|---|---|---|---|\n"
+        f"| [{standard_id}](standards/fixture.md) | Fixture | Test | {status} |\n",
+        encoding="utf-8",
+    )
+
+
 class StandardMaturityTests(unittest.TestCase):
     def test_current_repository_standards_remain_draft(self):
         found = dict(validate_repository(ROOT))
@@ -112,7 +121,7 @@ class StandardMaturityTests(unittest.TestCase):
             with self.assertRaisesRegex(MaturityError, "identifiers must be distinct"):
                 validate_repository(root)
 
-    def test_freeze_candidate_requires_real_use_and_review(self):
+    def test_freeze_candidate_requires_bounded_implementation_or_use_and_review(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "standards").mkdir()
@@ -124,14 +133,25 @@ class StandardMaturityTests(unittest.TestCase):
             payload = {
                 "standard_id": "TEST-1",
                 "status": "Freeze Candidate",
-                "real_use": [],
+                "implementation_or_use": [],
                 "review": {
                     "decision": "ACCEPT FOR CURRENT STATUS",
                     "evidence": "https://example.invalid/review",
                 },
             }
             (evidence_dir / "TEST-1.json").write_text(json.dumps(payload), encoding="utf-8")
-            with self.assertRaisesRegex(MaturityError, "requires real-use evidence"):
+            with self.assertRaisesRegex(MaturityError, "requires bounded implementation or use evidence"):
+                validate_repository(root)
+
+    def test_readme_cannot_claim_a_different_maturity_status(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "standards").mkdir()
+            (root / "standards" / "fixture.md").write_text(
+                standard_text("TEST-1", "Draft"), encoding="utf-8"
+            )
+            write_readme(root, "TEST-1", "Stable")
+            with self.assertRaisesRegex(MaturityError, "README maturity status must match"):
                 validate_repository(root)
 
     def test_stable_structure_can_pass_but_does_not_prove_independence_by_itself(self):
@@ -143,6 +163,7 @@ class StandardMaturityTests(unittest.TestCase):
             (root / "standards" / "fixture.md").write_text(
                 standard_text("TEST-1", "Stable"), encoding="utf-8"
             )
+            write_readme(root, "TEST-1", "Stable")
             payload = {
                 "standard_id": "TEST-1",
                 "status": "Stable",
