@@ -144,3 +144,27 @@ Adoption evidence:
 - learning record `ml-4aa2890de62e90c37c6ca332f5b3a89aced22671b2ecbdb2ace76c04bd81e25d`;
 - introduced 4 August 2026;
 - rollback requires a separately reviewed retirement or supersession change.
+
+## 9. Real-Thing Proof and completion status
+
+This repository additionally consumes these exact authorities:
+
+- Threadkeeper Real-Thing Proof authority: `armpitpete/threadkeeper@a5bc55336c86097301b378d8654ac92a26ef81e5`;
+- Project Status v2 authority: `armpitpete/merrin-project-controls@7bc8b7f5ef921851ad163093f089d28d8128bf6c`;
+- canonical semantic validator snapshot: `vendor/merrin-project-controls/7bc8b7f5ef921851ad163093f089d28d8128bf6c/validate_project_status.py`;
+- canonical validator Git blob: `d0e704ab42d72da6b66fb1d9f31d739ed6220abd`.
+
+The governing rule is:
+
+> Never test a proxy when the claim concerns the real thing. Never allow `complete` to absorb implementation, deployment, live verification and human acceptance into one vague word.
+
+For Merrin Open Synth Standards specifically:
+
+- repository lifecycle status and individual standard maturity are separate evidence dimensions;
+- `Draft`, `Freeze Candidate`, `Stable` and `Deprecated` describe the maturity of one standard, not the completion state of this repository;
+- repository merge, CI or publication cannot substitute for real-use evidence required by a maturity claim;
+- physical, player, accessibility and safety claims require direct evidence from the relevant real implementation or human surface;
+- a `Stable` claim requires successful use across multiple independent implementation contexts and an evidence-backed review;
+- automated validation may reject structurally unsupported maturity claims, but it must not manufacture real-world evidence or human acceptance.
+
+Local rules may strengthen these boundaries but must not weaken the exact pinned authorities or their direct-evidence requirements.
