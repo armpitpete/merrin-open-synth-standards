@@ -82,16 +82,24 @@ def _validate_sidecar(root: Path, standard_id: str, status: str) -> None:
     _require_review(payload, standard_id)
 
     if status == "Freeze Candidate":
-        real_use = payload.get("real_use")
-        if not isinstance(real_use, list) or not real_use:
-            raise MaturityError(f"{standard_id}: Freeze Candidate requires real-use evidence")
-        for item in real_use:
+        implementation_or_use = payload.get("implementation_or_use")
+        if not isinstance(implementation_or_use, list) or not implementation_or_use:
+            raise MaturityError(
+                f"{standard_id}: Freeze Candidate requires bounded implementation or use evidence"
+            )
+        for item in implementation_or_use:
             if not isinstance(item, dict):
-                raise MaturityError(f"{standard_id}: real-use evidence entries must be objects")
+                raise MaturityError(
+                    f"{standard_id}: implementation/use evidence entries must be objects"
+                )
             if not isinstance(item.get("context"), str) or not item["context"].strip():
-                raise MaturityError(f"{standard_id}: real-use evidence requires a context")
+                raise MaturityError(
+                    f"{standard_id}: implementation/use evidence requires a context"
+                )
             if not isinstance(item.get("evidence"), str) or not item["evidence"].strip():
-                raise MaturityError(f"{standard_id}: real-use evidence requires an evidence pointer")
+                raise MaturityError(
+                    f"{standard_id}: implementation/use evidence requires an evidence pointer"
+                )
 
     elif status == "Stable":
         implementations = payload.get("implementations")
@@ -118,6 +126,25 @@ def _validate_sidecar(root: Path, standard_id: str, status: str) -> None:
             raise MaturityError(f"{standard_id}: Deprecated requires a reason")
 
 
+def _validate_readme_statuses(root: Path, found: list[tuple[str, str]]) -> None:
+    readme = root / "README.md"
+    if not readme.is_file():
+        return
+    try:
+        lines = readme.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise MaturityError("cannot read README.md") from exc
+    for standard_id, status in found:
+        rows = [line for line in lines if f"[{standard_id}]" in line]
+        if len(rows) != 1:
+            raise MaturityError(f"{standard_id}: README must contain exactly one standards-table row")
+        cells = [cell.strip() for cell in rows[0].strip().strip("|").split("|")]
+        if not cells or cells[-1] != status:
+            raise MaturityError(
+                f"{standard_id}: README maturity status must match standard frontmatter"
+            )
+
+
 def validate_repository(root: Path) -> list[tuple[str, str]]:
     standards_dir = root / "standards"
     if not standards_dir.is_dir():
@@ -142,6 +169,7 @@ def validate_repository(root: Path) -> list[tuple[str, str]]:
 
     if not found:
         raise MaturityError("no standards found")
+    _validate_readme_statuses(root, found)
     return found
 
 
