@@ -68,7 +68,7 @@ def _require_review(payload: dict[str, Any], standard_id: str) -> None:
         raise MaturityError(f"{standard_id}: maturity review requires an evidence pointer")
 
 
-def _validate_sidecar(root: Path, standard_id: str, status: str) -> None:
+def _validate_sidecar(root: Path, standard_id: str, version: str, status: str) -> None:
     path = root / "evidence" / "maturity" / f"{standard_id}.json"
     if not path.is_file():
         raise MaturityError(f"{standard_id}: {status} requires {path.relative_to(root)}")
@@ -77,6 +77,8 @@ def _validate_sidecar(root: Path, standard_id: str, status: str) -> None:
         raise MaturityError(f"{standard_id}: maturity evidence must be an object")
     if payload.get("standard_id") != standard_id:
         raise MaturityError(f"{standard_id}: maturity evidence standard_id mismatch")
+    if payload.get("version") != version:
+        raise MaturityError(f"{standard_id}: maturity evidence version mismatch")
     if payload.get("status") != status:
         raise MaturityError(f"{standard_id}: maturity evidence status mismatch")
     _require_review(payload, standard_id)
@@ -114,6 +116,8 @@ def _validate_sidecar(root: Path, standard_id: str, status: str) -> None:
                 raise MaturityError(f"{standard_id}: Stable implementation requires implementation_id")
             if item.get("independent_context") is not True:
                 raise MaturityError(f"{standard_id}: Stable implementation must declare an independent context")
+            if item.get("successful_use") is not True:
+                raise MaturityError(f"{standard_id}: Stable implementation must declare successful use")
             if not isinstance(item.get("evidence"), str) or not item["evidence"].strip():
                 raise MaturityError(f"{standard_id}: Stable implementation requires an evidence pointer")
             ids.append(implementation_id)
@@ -155,16 +159,19 @@ def validate_repository(root: Path) -> list[tuple[str, str]]:
     for path in sorted(standards_dir.glob("*.md")):
         meta = _frontmatter(path)
         standard_id = meta.get("standard_id", "").strip()
+        version = meta.get("version", "").strip()
         status = meta.get("status", "").strip()
         if not standard_id:
             raise MaturityError(f"standard_id is missing: {path}")
+        if not version:
+            raise MaturityError(f"{standard_id}: version is missing")
         if standard_id in ids:
             raise MaturityError(f"duplicate standard_id: {standard_id}")
         ids.add(standard_id)
         if status not in ALLOWED_STATUSES:
             raise MaturityError(f"{standard_id}: unsupported maturity status {status!r}")
         if status != "Draft":
-            _validate_sidecar(root, standard_id, status)
+            _validate_sidecar(root, standard_id, version, status)
         found.append((standard_id, status))
 
     if not found:
