@@ -81,7 +81,7 @@ The maturity status above belongs to an individual standard. It must not be infe
 In particular:
 
 - a commit, pull-request merge, CI pass or publication on `main` can prove repository events but cannot by itself make a standard `Freeze Candidate` or `Stable`;
-- `Freeze Candidate` requires direct bounded real-use evidence plus review appropriate to the claimed status;
+- `Freeze Candidate` requires bounded implementation or use evidence showing that the proposal has moved beyond documentation-only assertion, plus review appropriate to the claimed status; it may still be awaiting broader or player-facing real use;
 - `Stable` requires successful use across multiple independent instrument or implementation contexts plus evidence-backed review;
 - documentation can define player, accessibility, safety or physical requirements but cannot prove those requirements work in the real implementation;
 - automated checks are supporting evidence and cannot substitute for human/player evidence where the claim concerns a human or physical surface;
