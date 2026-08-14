@@ -25,7 +25,7 @@ Those `NOT_APPLICABLE` stages do **not** waive evidence required by an individua
 The standard-status vocabulary remains:
 
 - `Draft` — provisional and not yet proven sufficiently;
-- `Freeze Candidate` — coherent enough for bounded real use, with real-use evidence and review required before promotion;
+- `Freeze Candidate` — believed coherent and ready for bounded real use, supported by bounded implementation or use evidence and review appropriate to that status;
 - `Stable` — used successfully across multiple independent instrument or implementation contexts;
 - `Deprecated` — explicitly retired or replaced.
 
@@ -48,8 +48,10 @@ The repository validator checks only what can be checked mechanically. Human rev
 A companion record must identify:
 
 - the exact `standard_id` and `status`;
-- at least one real-use evidence item;
+- at least one bounded implementation or use evidence item;
 - an evidence-backed review decision accepting the current status.
+
+A Freeze Candidate can still be awaiting broader or player-facing real use. The required evidence shows that the proposal has moved beyond documentation-only assertion; it does not convert the candidate into `Stable`.
 
 ### Stable
 
@@ -66,6 +68,10 @@ The mechanical declaration is not proof of independence by itself. Review must r
 ### Deprecated
 
 A companion record must identify the reason for deprecation and an evidence-backed review decision. A replacement may be named where one exists.
+
+## Public summary consistency
+
+Where `README.md` publishes a standard's maturity status, that status must match the standard's frontmatter. This prevents the public summary from silently claiming a higher maturity state than the authoritative standard file.
 
 ## Human, accessibility and safety claims
 
