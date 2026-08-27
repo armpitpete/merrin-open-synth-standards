@@ -1,0 +1,168 @@
+{
+  "standard_id": "MERRIN-STD-SLS-1",
+  "version": "v2.0-draft",
+  "signature_window_ms": 1000,
+  "max_visible_pulses_per_rolling_second": 3,
+  "mandatory_states": [
+    "IDLE",
+    "ACTIVE",
+    "ALT_SHIFTED",
+    "MUTED_BYPASSED",
+    "ARMED",
+    "CONFIRM_REQUIRED",
+    "RECORD_WRITE",
+    "WARNING",
+    "ERROR"
+  ],
+  "critical_global_states": [
+    "ERROR",
+    "CONFIRM_REQUIRED",
+    "ARMED",
+    "RECORD_WRITE",
+    "WARNING",
+    "CLOCK_LOST"
+  ],
+  "precedence": [
+    "ERROR",
+    "CONFIRM_REQUIRED",
+    "ARMED",
+    "RECORD_WRITE",
+    "WARNING",
+    "CLOCK_LOST",
+    "MUTED_BYPASSED",
+    "ALT_SHIFTED",
+    "ACTIVE",
+    "IDLE"
+  ],
+  "patterns": {
+    "P0": {
+      "name": "STEADY_DIM",
+      "kind": "steady",
+      "brightness": "dim",
+      "signature_required": false
+    },
+    "P1": {
+      "name": "STEADY_MID",
+      "kind": "steady",
+      "brightness": "mid",
+      "signature_required": false
+    },
+    "P2": {
+      "name": "BREATHE_SLOW",
+      "kind": "breathe",
+      "cycle_ms": 2000,
+      "min_brightness": 0.25,
+      "max_brightness": 0.75,
+      "signature_required": false
+    },
+    "P3": {
+      "name": "PULSE_LONG_1HZ",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 420},
+        {"level": 0, "duration_ms": 580}
+      ],
+      "signature_required": false
+    },
+    "P4": {
+      "name": "PULSE_SHORT_1HZ",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 160},
+        {"level": 0, "duration_ms": 840}
+      ],
+      "signature_required": true
+    },
+    "P5": {
+      "name": "DOUBLE_EQUAL_1HZ",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 140},
+        {"level": 0, "duration_ms": 140},
+        {"level": 1, "duration_ms": 140},
+        {"level": 0, "duration_ms": 580}
+      ],
+      "signature_required": true
+    },
+    "P6": {
+      "name": "TRIPLE_EQUAL_1HZ",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 110},
+        {"level": 0, "duration_ms": 110},
+        {"level": 1, "duration_ms": 110},
+        {"level": 0, "duration_ms": 110},
+        {"level": 1, "duration_ms": 110},
+        {"level": 0, "duration_ms": 450}
+      ],
+      "signature_required": true
+    },
+    "P7": {
+      "name": "WARNING_SHORT_LONG",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 120},
+        {"level": 0, "duration_ms": 140},
+        {"level": 1, "duration_ms": 300},
+        {"level": 0, "duration_ms": 440}
+      ],
+      "signature_required": true
+    },
+    "P8": {
+      "name": "ERROR_LONG_SHORT",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 300},
+        {"level": 0, "duration_ms": 140},
+        {"level": 1, "duration_ms": 120},
+        {"level": 0, "duration_ms": 440}
+      ],
+      "signature_required": true
+    },
+    "P9": {
+      "name": "CLOCK_LOST_WIDE_DOUBLE",
+      "kind": "pulse",
+      "cycle_ms": 1000,
+      "segments": [
+        {"level": 1, "duration_ms": 120},
+        {"level": 0, "duration_ms": 520},
+        {"level": 1, "duration_ms": 120},
+        {"level": 0, "duration_ms": 240}
+      ],
+      "signature_required": true
+    }
+  },
+  "state_defaults": {
+    "IDLE": "P0",
+    "ACTIVE": "P1",
+    "ALT_SHIFTED": "P2",
+    "MUTED_BYPASSED": "P3",
+    "ARMED": "P5",
+    "CONFIRM_REQUIRED": "P6",
+    "RECORD_WRITE": "P4",
+    "WARNING": "P7",
+    "ERROR": "P8",
+    "CLOCK_PRESENT": "P1",
+    "CLOCK_LOST": "P9",
+    "TRANSPORT_RUN": "P1",
+    "TRANSPORT_STOP": "P0",
+    "SELECTED_FOCUSED": "P2",
+    "LOCKED_HELD": "P3"
+  },
+  "reduced_motion_fallbacks": {
+    "ALT_SHIFTED": {"text": "Alternate", "symbol": "↥", "animation": "none"},
+    "MUTED_BYPASSED": {"text": "Muted", "symbol": "M", "animation": "none"},
+    "ARMED": {"text": "Armed", "symbol": "A", "animation": "none"},
+    "CONFIRM_REQUIRED": {"text": "Confirm", "symbol": "!", "animation": "none"},
+    "RECORD_WRITE": {"text": "Writing", "symbol": "W", "animation": "none"},
+    "WARNING": {"text": "Warning", "symbol": "△", "animation": "none"},
+    "ERROR": {"text": "Error", "symbol": "×", "animation": "none"},
+    "CLOCK_LOST": {"text": "Clock lost", "symbol": "C", "animation": "none"}
+  }
+}
