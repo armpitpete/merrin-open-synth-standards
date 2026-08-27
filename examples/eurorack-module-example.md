@@ -1,8 +1,8 @@
 # Example — Eurorack Module
 
-This example shows how a small Eurorack-style module can apply SLS-1 and HIL-1.
+This example shows how a small Eurorack-style module can apply SLS-1 v2 and HIL-1.
 
-It is illustrative, not mandatory.
+It is illustrative, not human-recognition evidence.
 
 ## Module
 
@@ -50,34 +50,49 @@ OUT    CLOCK       RESET
 - Feedback is a risky control, so it should not be tiny or hidden.
 - If feedback can self-oscillate hard, add clear marking and consider a warning state.
 
-## SLS-1 state map
+## SLS-1 v2 state map
 
 | Behaviour | SLS-1 state | Pattern |
 |---|---|---|
-| Powered but idle | IDLE | STEADY_DIM |
-| Delay active | ACTIVE | STEADY_MID |
-| Alternate mode held | ALT / SHIFTED | BREATHE_SLOW |
-| Delay path bypassed | MUTED / BYPASSED | PULSE_0p5HZ |
-| About to clear memory | ARMED | DOUBLE_PULSE_WIDE |
-| Waiting for confirm clear | CONFIRM REQUIRED | TRIPLE_PULSE_WIDE |
-| Writing/saving setting | RECORD / WRITE | PULSE_1HZ |
-| Feedback unsafe/high | WARNING | documented distinct warning pattern |
-| Internal fault | ERROR | STEADY_BRIGHT |
+| Powered but idle | IDLE | P0 `STEADY_DIM` |
+| Delay active | ACTIVE | P1 `STEADY_MID` |
+| Alternate mode held | ALT / SHIFTED | P2 `BREATHE_SLOW` |
+| Delay path bypassed | MUTED / BYPASSED | P3 `PULSE_LONG_1HZ` |
+| About to clear memory | ARMED | P5 `DOUBLE_EQUAL_1HZ` |
+| Waiting for confirm clear | CONFIRM REQUIRED | P6 `TRIPLE_EQUAL_1HZ` |
+| Writing/saving setting | RECORD / WRITE | P4 `PULSE_SHORT_1HZ` |
+| Feedback unsafe/high | WARNING | P7 `WARNING_SHORT_LONG` |
+| Internal fault | ERROR | P8 `ERROR_LONG_SHORT` |
+
+## Clear-memory flow
+
+```text
+normal
+→ deliberate clear/arm
+→ ARMED
+→ deliberate proceed
+→ CONFIRM REQUIRED
+→ confirm inside documented window
+→ RECORD / WRITE while memory is actually cleared
+→ IDLE/ACTIVE on success
+→ WARNING/ERROR on failure
+```
+
+Timeout or cancel must not clear memory.
 
 ## Compliance notes
 
 ```text
 HIL-1:
-- Main controls reachable when patched: yes
-- Jacks grouped at bottom: yes
-- State LED near affected function: yes
-- Dangerous action protected: yes, clear-memory requires arm/confirm
+- Main controls reachable when patched: design intent
+- Jacks grouped at bottom: design intent
+- State LED near affected function: design intent
 
 SLS-1:
 - State patterns documented: yes
-- No pattern exceeds 3 pulses/sec: yes
-- Colour not required as the only signal: yes
-- Error and confirm are distinct: yes
+- Critical patterns come from v2 machine contract: yes
+- Colour is not required as the only carrier: yes
+- Human recognition test: not performed in this illustrative example
 ```
 
 ## Common mistake
