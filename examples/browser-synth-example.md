@@ -1,8 +1,8 @@
 # Example — Browser Synth
 
-This example shows how a browser-based synth can apply SLS-1 and HIL-1.
+This example shows how a browser-based synth can apply SLS-1 v2 and HIL-1.
 
-It is illustrative, not mandatory.
+It is illustrative. For executable SLS-1 behaviour, see [`sls-1-reference/`](sls-1-reference/).
 
 ## App
 
@@ -65,50 +65,62 @@ MIDI diagnostics, raw event log, effect toggles, debug state
 
 SLS-1 can be implemented with LED-like indicators, status chips, icon/text blocks, or small state badges.
 
-The same state logic applies even if the “light” is rendered in HTML/CSS.
+The state resolver is independent of rendering.
 
-| Behaviour | SLS-1 state | Browser expression |
+| Behaviour | SLS-1 state | Normal expression |
 |---|---|---|
-| App loaded but audio not started | IDLE | dim status badge / `Ready` |
-| Audio running | ACTIVE | steady active badge / `Audio running` |
-| Alternate keyboard layer | ALT / SHIFTED | slow breathe or clear `Shift` state |
-| Muted voice | MUTED / BYPASSED | slow pulse / `Muted` |
-| About to overwrite setting | ARMED | double pulse / `Armed` |
-| Waiting for second confirmation | CONFIRM REQUIRED | triple pulse / `Confirm` |
-| Saving local setting | RECORD / WRITE | 1Hz pulse / `Saving` |
-| MIDI unavailable | WARNING | non-fatal warning text and state marker |
-| Audio/MIDI stuck | ERROR | bright/error status and panic guidance |
+| App loaded but audio not started | IDLE | P0 + `Ready` |
+| Audio running | ACTIVE | P1 + `Audio running` |
+| Alternate keyboard layer | ALT / SHIFTED | P2 + `Shift` |
+| Muted voice | MUTED / BYPASSED | P3 + `Muted` |
+| About to overwrite setting | ARMED | P5 + `Armed` |
+| Waiting for second confirmation | CONFIRM REQUIRED | P6 + `Confirm` |
+| Saving local setting | RECORD / WRITE | P4 + `Writing` |
+| MIDI degraded/unavailable | WARNING | P7 + warning text |
+| Audio/MIDI fault | ERROR | P8 + error text and panic guidance |
+| Expected external clock lost | CLOCK LOST | P9 + `Clock lost` |
 
 ## Accessibility notes
 
 Do not rely only on colour.
 
-Use at least two of:
+Use at least two relevant carriers across the complete control:
 
-- text label
-- rhythm/animation
-- placement near relevant control
-- icon
-- brightness/weight
-- screen-reader-visible status text
+- text label;
+- rhythm/animation;
+- placement near relevant control;
+- icon;
+- brightness/weight;
+- screen-reader-visible status text.
 
-Respect reduced-motion preferences where possible.
+When `prefers-reduced-motion: reduce` is active, critical animated states must have a static equivalent such as:
+
+```text
+A  Armed
+!  Confirm
+W  Writing
+△  Warning
+×  Error
+C  Clock lost
+```
+
+The underlying SLS-1 state and precedence do not change.
 
 ## Compliance notes
 
 ```text
 HIL-1:
-- Main controls visible before diagnostics: yes
-- Panic accessible: yes
-- Status near relevant controls: yes
-- Debug/test controls visually separated: yes
-- Touch/keyboard targets usable: yes
+- Main controls visible before diagnostics: design intent
+- Panic accessible: design intent
+- Status near relevant controls: design intent
+- Debug/test controls visually separated: design intent
 
 SLS-1:
 - State meanings documented: yes
-- Browser status chips map to canonical states: yes
+- Browser expressions map to v2 canonical states: yes
 - Colour not the only signal: yes
-- Warning/error states visible: yes
+- Reduced-motion critical fallback defined: yes
+- Human recognition test: not performed in this illustrative example
 ```
 
 ## Common mistake
