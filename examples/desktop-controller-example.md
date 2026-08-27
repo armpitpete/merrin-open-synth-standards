@@ -1,8 +1,8 @@
 # Example — Desktop Controller
 
-This example shows how a desktop or angled performance controller can apply SLS-1 and HIL-1.
+This example shows how a desktop or angled performance controller can apply SLS-1 v2 and HIL-1.
 
-It is illustrative, not mandatory.
+It is illustrative, not human-recognition evidence.
 
 ## Device
 
@@ -50,19 +50,20 @@ PLAYER SIDE
 - Panic/stop remains reachable.
 - Left-hand and right-hand roles are visually clear.
 
-## SLS-1 state map
+## SLS-1 v2 state map
 
 | Behaviour | SLS-1 state | Pattern |
 |---|---|---|
-| Controller powered and ready | IDLE | STEADY_DIM |
-| Performance surface active | ACTIVE | STEADY_MID |
-| Shift/alternate layer held | ALT / SHIFTED | BREATHE_SLOW |
-| Output muted | MUTED / BYPASSED | PULSE_0p5HZ |
-| Calibration armed | ARMED | DOUBLE_PULSE_WIDE |
-| Confirm calibration save | CONFIRM REQUIRED | TRIPLE_PULSE_WIDE |
-| Writing calibration | RECORD / WRITE | PULSE_1HZ |
-| External clock lost | CLOCK LOST | PULSE_0p5HZ or documented clock-lost pattern |
-| Fault or unsafe state | ERROR | STEADY_BRIGHT |
+| Controller powered and ready | IDLE | P0 `STEADY_DIM` |
+| Performance surface active | ACTIVE | P1 `STEADY_MID` |
+| Shift/alternate layer held | ALT / SHIFTED | P2 `BREATHE_SLOW` |
+| Output muted | MUTED / BYPASSED | P3 `PULSE_LONG_1HZ` |
+| Calibration armed | ARMED | P5 `DOUBLE_EQUAL_1HZ` |
+| Confirm calibration save | CONFIRM REQUIRED | P6 `TRIPLE_EQUAL_1HZ` |
+| Writing calibration | RECORD / WRITE | P4 `PULSE_SHORT_1HZ` |
+| External clock lost | CLOCK LOST | P9 `CLOCK_LOST_WIDE_DOUBLE` |
+| Non-fatal degraded state | WARNING | P7 `WARNING_SHORT_LONG` |
+| Fault or unsafe state | ERROR | P8 `ERROR_LONG_SHORT` |
 
 ## LED placement
 
@@ -75,23 +76,21 @@ Use local lights for local functions.
 - calibration/confirm light near calibration/save control
 ```
 
-Do not hide armed, confirm, or error lights in decorative lighting.
+Do not hide armed, confirm, warning, clock-lost, or error lights in decorative lighting.
 
 ## Compliance notes
 
 ```text
 HIL-1:
-- Main performance surface clear of cables: yes
-- Patching placed at rear/lower edge: yes
-- Diagnostics separated: yes
-- Panic/stop accessible: yes
-- Left/right hand roles readable: yes
+- Main performance surface clear of cables: design intent
+- Patching placed at rear/lower edge: design intent
+- Panic/stop accessible: design intent
 
 SLS-1:
-- State patterns documented: yes
+- Critical global signatures are distinct in the v2 contract: yes
 - Calibration write uses arm/confirm/write states: yes
-- Clock lost distinct from normal activity: yes
-- No strobe or random flicker: yes
+- Clock lost has its own global pattern: yes
+- Human recognition test: not performed in this illustrative example
 ```
 
 ## Common mistake
