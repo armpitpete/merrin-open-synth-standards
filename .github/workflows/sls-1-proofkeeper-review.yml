@@ -1,0 +1,28 @@
+name: SLS-1 independent Proofkeeper review
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  proofkeeper-semantic:
+    name: independent semantic falsification
+    if: >-
+      github.event.pull_request.number == 8 &&
+      github.event.label.name == 'proofkeeper-review'
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    uses: armpitpete/threadkeeper/.github/workflows/proofkeeper-semantic-review.yml@c3d8f673bfb68234e2e41ccaf70fd4f6bd561277
+    with:
+      target_repository: armpitpete/merrin-open-synth-standards
+      target_sha: ${{ github.event.pull_request.head.sha }}
+      criteria_path: reviews/SLS-1_V2_PROOFKEEPER_CRITERIA.md
+      required_workflows_json: '["Validate SLS-1"]'
+      model: gpt-5.6-sol
+      effort: high
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
