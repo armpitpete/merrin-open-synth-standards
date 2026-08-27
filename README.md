@@ -8,10 +8,10 @@ They are not presented as universal law. They are working standards for builders
 
 ## Standards
 
-| Standard | Title | What it answers | Status |
-|---|---|---|---|
-| [MERRIN-STD-SLS-1](standards/MERRIN-STD-SLS-1_State_Lantern_System.md) | State Lantern System | What does this light mean? | Draft |
-| [MERRIN-STD-HIL-1](standards/MERRIN-STD-HIL-1_Human_Interface_Layout.md) | Human Interface Layout | Where should this control, jack, LED, or performance area go? | Draft |
+| Standard | Title | What it answers | Version | Status |
+|---|---|---|---|---|
+| [MERRIN-STD-SLS-1](standards/MERRIN-STD-SLS-1_State_Lantern_System.md) | State Lantern System | What does this light mean? | v2.0-draft | Draft |
+| [MERRIN-STD-HIL-1](standards/MERRIN-STD-HIL-1_Human_Interface_Layout.md) | Human Interface Layout | Where should this control, jack, LED, or performance area go? | current draft | Draft |
 
 ## Examples
 
@@ -20,10 +20,14 @@ They are not presented as universal law. They are working standards for builders
 | [Eurorack module example](examples/eurorack-module-example.md) | Shows SLS-1 and HIL-1 on a compact patchable module. |
 | [Desktop controller example](examples/desktop-controller-example.md) | Shows hands-first layout, rear patching, and state-light placement. |
 | [Browser synth example](examples/browser-synth-example.md) | Shows how the standards apply to Web Audio and HTML/CSS interfaces. |
+| [SLS-1 v2 reference surface](examples/sls-1-reference/) | Executable state resolver and canonical pattern renderer. |
 
 ## Repository files
 
 - [Changelog](CHANGELOG.md)
+- [Standard proposal process](docs/STANDARD_PROPOSAL_PROCESS.md)
+- [SLS-1 v1→v2 migration](docs/SLS-1_V1_TO_V2_MIGRATION.md)
+- [SLS-1 v2 evidence](evidence/SLS-1_V2_COMPLETION_EVIDENCE.md)
 - [Licence](LICENSE.md)
 - [Notice](NOTICE.md)
 
@@ -56,19 +60,27 @@ Defines a shared LED/status-light language for instrument states.
 It covers:
 
 - canonical state names
-- LED blink/breathe/steady patterns
+- canonical blink/breathe/steady patterns
+- one-second critical pattern signatures
 - safety precedence
-- destructive-action warning states
+- staged destructive-action states
 - sensory safety limits
+- reduced-motion equivalents
 - accessibility guidance
-- compliance tests
+- mechanical and human conformance tests
+
+The normative v2 timing contract is machine-readable at:
+
+```text
+standards/data/sls-1-v2.0-patterns.json
+```
 
 Short version:
 
 ```text
 State first.
 Decoration second.
-Rhythm carries meaning.
+Rhythm carries risk meaning.
 Colour reinforces meaning.
 ```
 
@@ -105,8 +117,8 @@ Where should this light/control/jack go?
 Example:
 
 ```text
-SLS-1 says a red triple pulse can mean CONFIRM REQUIRED.
-HIL-1 says that LED must be near the affected control or system area, not hidden in decorative lighting.
+SLS-1 says a triple pulse can mean CONFIRM REQUIRED.
+HIL-1 says that indicator must be near the affected control or system area, not hidden in decorative lighting.
 ```
 
 ## Versioning
@@ -116,9 +128,11 @@ Each standard has its own version and status.
 Use this status language:
 
 - `Draft` — open to change
-- `Freeze Candidate` — believed stable, awaiting real use
-- `Stable` — used successfully across multiple instruments
+- `Freeze Candidate` — believed coherent and ready for bounded real use
+- `Stable` — used successfully across multiple instruments or implementations
 - `Deprecated` — replaced or no longer recommended
+
+Material breaking changes require an explicit migration record and preserved access to the earlier version.
 
 ## Reuse
 
