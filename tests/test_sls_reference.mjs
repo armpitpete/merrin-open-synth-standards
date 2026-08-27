@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {patternLevelAt, resolveState, statePresentation} from "../examples/sls-1-reference/sls.mjs";
+import {buildRecognitionTrials, scoreRecognition} from "../examples/sls-1-reference/recognition.mjs";
 
 const spec = JSON.parse(fs.readFileSync(new URL("../standards/data/sls-1-v2.0-patterns.json", import.meta.url), "utf8"));
 
@@ -24,4 +25,25 @@ assert.equal(patternLevelAt(armed, 0), 1);
 assert.ok(patternLevelAt(armed, 200) < 0.2);
 assert.equal(patternLevelAt(armed, 300), 1);
 
-console.log("PASS: SLS-1 reference resolver and renderer");
+const trials = buildRecognitionTrials(spec, 12345);
+assert.equal(trials.filter((row) => row.state === "ERROR").length, 10);
+assert.equal(trials.filter((row) => row.state === "CLOCK_LOST").length, 10);
+assert.equal(trials.filter((row) => row.state === "IDLE").length, 3);
+
+const perfect = trials.map((row, i) => ({
+  trial: i + 1,
+  state: row.state,
+  answer: row.state,
+  correct: true,
+  phase_ms: row.phase_ms,
+  critical: row.critical,
+}));
+assert.equal(scoreRecognition(perfect, spec).pass, true);
+
+const confused = perfect.map((row) => ({...row}));
+const armedIndex = confused.findIndex((row) => row.state === "ARMED");
+confused[armedIndex].answer = "WARNING";
+confused[armedIndex].correct = false;
+assert.equal(scoreRecognition(confused, spec).pass, false);
+
+console.log("PASS: SLS-1 reference resolver and recognition harness");
