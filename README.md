@@ -10,7 +10,7 @@ They are not presented as universal law. They are working standards for builders
 
 | Standard | Title | What it answers | Version | Status |
 |---|---|---|---|---|
-| [MERRIN-STD-SLS-1](standards/MERRIN-STD-SLS-1_State_Lantern_System.md) | State Lantern System | What does this light mean? | v2.0-draft | Draft |
+| [MERRIN-STD-SLS-1](standards/MERRIN-STD-SLS-1_State_Lantern_System.md) | State Lantern System | What does this light mean? | v3.0-draft KISS candidate | Draft |
 | [MERRIN-STD-HIL-1](standards/MERRIN-STD-HIL-1_Human_Interface_Layout.md) | Human Interface Layout | Where should this control, jack, LED, or performance area go? | current draft | Draft |
 
 ## Examples
@@ -20,14 +20,15 @@ They are not presented as universal law. They are working standards for builders
 | [Eurorack module example](examples/eurorack-module-example.md) | Shows SLS-1 and HIL-1 on a compact patchable module. |
 | [Desktop controller example](examples/desktop-controller-example.md) | Shows hands-first layout, rear patching, and state-light placement. |
 | [Browser synth example](examples/browser-synth-example.md) | Shows how the standards apply to Web Audio and HTML/CSS interfaces. |
-| [SLS-1 v2 reference surface](examples/sls-1-reference/) | Executable state resolver and canonical pattern renderer. |
+| [SLS-1 v3 reference surface](examples/sls-1-reference/) | Executable colour + steady/slow/fast reference renderer. |
+| [SLS-1 v3 unfamiliar-person gate](examples/sls-1-reference/recognition.html) | 21-trial KISS human-recognition harness. |
 
 ## Repository files
 
 - [Changelog](CHANGELOG.md)
 - [Standard proposal process](docs/STANDARD_PROPOSAL_PROCESS.md)
-- [SLS-1 v1→v2 migration](docs/SLS-1_V1_TO_V2_MIGRATION.md)
-- [SLS-1 v2 evidence](evidence/SLS-1_V2_COMPLETION_EVIDENCE.md)
+- [SLS-1 v1/v2 → v3 migration](docs/SLS-1_V1_V2_TO_V3_MIGRATION.md)
+- [SLS-1 v3 KISS candidate evidence](evidence/SLS-1_V3_KISS_CANDIDATE.md)
 - [Licence](LICENSE.md)
 - [Notice](NOTICE.md)
 
@@ -37,66 +38,39 @@ Synths are not only circuits and code. They are also physical and visual decisio
 
 A good instrument should make important states readable, keep risky actions obvious, and stop the player’s hands from fighting cables, tiny controls, or unclear lights.
 
-## Scope
+## MERRIN-STD-SLS-1 — State Lantern System
 
-These standards are intended for:
+SLS-1 v3 deliberately rejects the Morse-like pulse vocabulary explored in v2.
 
-- DIY synth modules
-- Eurorack-style modules
-- desktop synths
-- browser synths
-- MIDI/CV controllers
-- performance surfaces
-- hybrid software/hardware instruments
-
-They are especially useful for small teams, solo builders, and AI-assisted synth projects where consistency can drift unless rules are written down.
-
-## Standard summaries
-
-### MERRIN-STD-SLS-1 — State Lantern System
-
-Defines a shared LED/status-light language for instrument states.
-
-It covers:
-
-- canonical state names
-- canonical blink/breathe/steady patterns
-- one-second critical pattern signatures
-- safety precedence
-- staged destructive-action states
-- sensory safety limits
-- reduced-motion equivalents
-- accessibility guidance
-- mechanical and human conformance tests
-
-The normative v2 timing contract is machine-readable at:
+The KISS rule is:
 
 ```text
-standards/data/sls-1-v2.0-patterns.json
+Colour carries category.
+Motion carries urgency.
+Context carries exact local meaning.
 ```
 
-Short version:
+The only temporal behaviours are:
 
 ```text
-State first.
-Decoration second.
-Rhythm carries risk meaning.
-Colour reinforces meaning.
+steady
+slow flash
+fast flash
 ```
 
-### MERRIN-STD-HIL-1 — Human Interface Layout
+No double pulse, triple pulse, short–long, long–short, or breathing state alphabet is canonical.
 
-Defines practical layout rules for controls, jacks, LEDs, and performance areas.
+The normative v3 contract is:
 
-It covers:
+```text
+standards/data/sls-1-v3.0-kiss.json
+```
 
-- knobs/controls above, jacks below as the default panel pattern
-- patch cables kept away from the main hand area
-- hands-first controller layout
-- large controls for live movement
-- grouped controls and jacks
-- LED placement near the state it describes
-- documented exceptions
+A single unlabelled global light is deliberately limited to broad IDLE / ACTIVE / WARNING / ERROR communication. Exact critical action states require a second carrier such as a fixed label, position, text, symbol, or dedicated indicator.
+
+## MERRIN-STD-HIL-1 — Human Interface Layout
+
+HIL-1 defines practical layout rules for controls, jacks, LEDs, and performance areas.
 
 Short version:
 
@@ -117,15 +91,13 @@ Where should this light/control/jack go?
 Example:
 
 ```text
-SLS-1 says a triple pulse can mean CONFIRM REQUIRED.
-HIL-1 says that indicator must be near the affected control or system area, not hidden in decorative lighting.
+SLS-1 says ARMED is amber + steady and requires contextual reinforcement.
+HIL-1 says the ARMED indicator belongs next to the affected action/control, not hidden in decorative lighting.
 ```
 
 ## Versioning
 
 Each standard has its own version and status.
-
-Use this status language:
 
 - `Draft` — open to change
 - `Freeze Candidate` — believed coherent and ready for bounded real use
