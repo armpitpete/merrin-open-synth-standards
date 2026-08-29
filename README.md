@@ -21,7 +21,7 @@ They are not presented as universal law. They are working standards for builders
 | [Desktop controller example](examples/desktop-controller-example.md) | Shows hands-first layout, rear patching, and state-light placement. |
 | [Browser synth example](examples/browser-synth-example.md) | Shows how the standards apply to Web Audio and HTML/CSS interfaces. |
 | [SLS-1 v3 reference surface](examples/sls-1-reference/) | Executable colour + steady/slow/fast reference renderer. |
-| [SLS-1 v3 contextual unfamiliar-person gate](examples/sls-1-reference/recognition.html) | 21-trial complete-panel human-recognition harness. |
+| [SLS-1 v3 recognition research](examples/sls-1-reference/recognition.html) | Retired browser-quiz evidence and current human-use model. |
 
 ## Repository files
 
@@ -36,7 +36,7 @@ They are not presented as universal law. They are working standards for builders
 
 Synths are not only circuits and code. They are also physical and visual decision systems.
 
-A good instrument should make important states readable, keep risky actions obvious, and stop the player’s hands from fighting cables, tiny controls, or unclear lights.
+A good instrument should make important states noticeable, keep risky actions obvious, and stop the player’s hands from fighting cables, tiny controls, or unclear lights.
 
 ## MERRIN-STD-SLS-1 — State Lantern System
 
@@ -68,7 +68,22 @@ standards/data/sls-1-v3.0-kiss.json
 
 A single unlabelled global light is deliberately limited to broad IDLE / ACTIVE / WARNING / ERROR communication. Exact critical action states require a second carrier such as a fixed label, position, text, symbol, or dedicated indicator.
 
-The first blind single-light v3 human run failed at 17/21. The corrective gate now tests the complete labelled panel rather than adding more blink codes.
+### How indicators are learned
+
+SLS-1 does not assume that a stranger should decode an exact state on first sight.
+
+```text
+see an indicator
+→ investigate
+→ read the key/manual
+→ remember it next time
+```
+
+The indicator should make the condition noticeable and give a simple category/urgency cue. The label/context and documentation give the exact meaning.
+
+Two unfamiliar-person browser quizzes were run during v3 design and both failed their artificial exact-naming criteria. They are preserved as research evidence. The second test showed that a one-second panel which disappears before the answer can measure visual search and short-term memory rather than realistic status-indicator use.
+
+Abstract recognition quizzes are therefore **not** SLS-1 conformance gates.
 
 ## MERRIN-STD-HIL-1 — Human Interface Layout
 
@@ -84,7 +99,7 @@ The player’s hand should not fight the patch cables.
 
 ```text
 SLS-1 answers:
-What does this light mean?
+What does this light mean and how should its status convention work?
 
 HIL-1 answers:
 Where should this light/control/jack go?
@@ -93,7 +108,7 @@ Where should this light/control/jack go?
 Example:
 
 ```text
-SLS-1 says ARMED is amber + steady and requires contextual reinforcement.
+SLS-1 says ARMED uses the simple amber/steady category and needs contextual reinforcement.
 HIL-1 says the ARMED indicator belongs next to the affected action/control, not hidden in decorative lighting.
 ```
 
