@@ -1,8 +1,8 @@
 # Example — Eurorack Module
 
-This example shows how a small Eurorack-style module can apply SLS-1 and HIL-1.
+This example shows how a small Eurorack-style module can apply SLS-1 v3 and HIL-1.
 
-It is illustrative, not mandatory.
+It is illustrative, not human-recognition evidence.
 
 ## Module
 
@@ -13,8 +13,6 @@ Main functions: input, delay/memory, feedback, wet/dry output
 ```
 
 ## HIL-1 layout
-
-Use Pattern A unless a documented exception is needed.
 
 ```text
 Title / identity
@@ -28,57 +26,39 @@ state LEDs near affected controls
 patch jacks
 ```
 
-## Suggested panel order
+## SLS-1 v3 state map
 
-```text
-[ Module name ]
-
-[ Time ]     [ Feedback ]
-[ Mix  ]     [ Tone     ]
-
-[ Mode button ]  [ State LED ]
-
-IN     CV TIME     CV FB
-OUT    CLOCK       RESET
-```
-
-## HIL-1 notes
-
-- Main knobs are above the patch cable area.
-- Patch jacks are grouped at the bottom.
-- The state LED is next to the mode button because it describes that control’s state.
-- Feedback is a risky control, so it should not be tiny or hidden.
-- If feedback can self-oscillate hard, add clear marking and consider a warning state.
-
-## SLS-1 state map
-
-| Behaviour | SLS-1 state | Pattern |
+| Behaviour | State | Expression |
 |---|---|---|
-| Powered but idle | IDLE | STEADY_DIM |
-| Delay active | ACTIVE | STEADY_MID |
-| Alternate mode held | ALT / SHIFTED | BREATHE_SLOW |
-| Delay path bypassed | MUTED / BYPASSED | PULSE_0p5HZ |
-| About to clear memory | ARMED | DOUBLE_PULSE_WIDE |
-| Waiting for confirm clear | CONFIRM REQUIRED | TRIPLE_PULSE_WIDE |
-| Writing/saving setting | RECORD / WRITE | PULSE_1HZ |
-| Feedback unsafe/high | WARNING | documented distinct warning pattern |
-| Internal fault | ERROR | STEADY_BRIGHT |
+| Powered but idle | IDLE | white dim steady |
+| Delay active | ACTIVE | green steady |
+| Alternate mode held | ALT / SHIFTED | blue steady |
+| Delay path bypassed | MUTED / BYPASSED | white slow flash |
+| About to clear memory | ARMED | amber steady beside CLEAR |
+| Waiting to confirm clear | CONFIRM REQUIRED | amber slow flash beside CONFIRM/CLEAR |
+| Writing/saving setting | RECORD / WRITE | red steady beside WRITE/MEMORY |
+| Feedback unsafe/high | WARNING | amber fast flash + warning carrier |
+| Internal fault | ERROR | red fast flash + error carrier |
 
-## Compliance notes
+## Clear-memory flow
 
 ```text
-HIL-1:
-- Main controls reachable when patched: yes
-- Jacks grouped at bottom: yes
-- State LED near affected function: yes
-- Dangerous action protected: yes, clear-memory requires arm/confirm
-
-SLS-1:
-- State patterns documented: yes
-- No pattern exceeds 3 pulses/sec: yes
-- Colour not required as the only signal: yes
-- Error and confirm are distinct: yes
+normal
+→ deliberate clear/arm
+→ ARMED
+→ deliberate proceed
+→ CONFIRM REQUIRED
+→ explicit confirm
+→ RECORD / WRITE while memory is actually changed
+→ IDLE/ACTIVE on success
+→ WARNING/ERROR on failure
 ```
+
+Timeout or cancel must not clear memory.
+
+## KISS rule
+
+If an exact meaning cannot be understood from colour + simple motion + where the light is located, add context. Do not add another pulse word.
 
 ## Common mistake
 
@@ -92,5 +72,5 @@ Better design:
 
 ```text
 Audio activity has its own meter or is omitted.
-State LED follows SLS-1 state precedence.
+State indicators use the small SLS-1 v3 vocabulary.
 ```

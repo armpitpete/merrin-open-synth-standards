@@ -1,0 +1,31 @@
+name: Validate SLS-1
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  sls-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate SLS-1 machine contract
+        run: python scripts/validate_sls1.py
+      - name: Run SLS-1 Python regressions
+        run: python -m unittest discover -s tests -p 'test_sls1.py' -v
+      - name: Run SLS-1 reference implementation tests
+        run: node tests/test_sls_reference.mjs
+      - name: Check pull-request whitespace
+        if: github.event_name == 'pull_request'
+        run: git diff --check origin/main...HEAD

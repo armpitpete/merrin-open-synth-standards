@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SLS-1 v3 KISS reference surface</title>
+  <style>
+    body{font-family:system-ui,sans-serif;margin:0;background:#fff;color:#111}
+    main{max-width:760px;margin:0 auto;padding:24px}
+    .status{display:flex;gap:18px;align-items:center;padding:20px 0}
+    .indicator-wrap{width:84px;height:84px;display:grid;place-items:center;background:#111;border-radius:12px}
+    .indicator{width:64px;height:64px;border-radius:50%;border:3px solid #777}
+    .state-text{font-size:24px;font-weight:700}
+    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px;margin:12px 0 18px}
+    button{min-height:44px;padding:8px 14px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>SLS-1 v3 KISS reference surface</h1>
+  <p>Colour carries category. Motion is only steady, slow flash, or fast flash. Exact critical meanings require context rather than a larger blink alphabet.</p>
+
+  <section class="status" aria-live="polite">
+    <div class="indicator-wrap"><div id="indicator" class="indicator" aria-hidden="true"></div></div>
+    <div>
+      <div id="state-text" class="state-text">IDLE</div>
+      <div id="pattern-text"></div>
+      <div id="reduced-motion-text" hidden></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Active conditions</h2>
+    <div id="state-controls" class="controls"></div>
+    <button id="clear" type="button">Return to IDLE</button>
+  </section>
+
+  <section>
+    <h2>KISS checks</h2>
+    <ul>
+      <li>No double/triple/counting patterns.</li>
+      <li>No short–long or long–short code.</li>
+      <li>Only steady, slow flash, and fast flash.</li>
+      <li>Critical exact meanings need a label, symbol, position, or dedicated indicator.</li>
+    </ul>
+  </section>
+</main>
+
+<script type="module">
+  import {colourCss, parseSls1SpecStrict, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "./sls.mjs";
+
+  const spec = await fetch("../../standards/data/sls-1-v3.0-kiss.json").then(async (response) => {
+    if (!response.ok) throw new Error(`Failed to load contract: ${response.status}`);
+    return parseSls1SpecStrict(await response.text());
+  });
+
+  const activeStates = new Set(["IDLE"]);
+  const indicator = document.querySelector("#indicator");
+  const stateText = document.querySelector("#state-text");
+  const patternText = document.querySelector("#pattern-text");
+  const reducedText = document.querySelector("#reduced-motion-text");
+  const controls = document.querySelector("#state-controls");
+  const reduceQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  const states = ["ACTIVE","ALT_SHIFTED","MUTED_BYPASSED","CLOCK_LOST","WARNING","RECORD_WRITE","ARMED","CONFIRM_REQUIRED","ERROR"];
+
+  for (const state of states) {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = state;
+    input.addEventListener("change", () => {
+      if (input.checked) activeStates.add(state);
+      else activeStates.delete(state);
+      if (activeStates.size === 0) activeStates.add("IDLE");
+      renderStatic();
+    });
+    label.append(input, document.createTextNode(` ${state.replaceAll("_", " ")}`));
+    controls.append(label);
+  }
+
+  document.querySelector("#clear").addEventListener("click", () => {
+    activeStates.clear();
+    activeStates.add("IDLE");
+    controls.querySelectorAll("input").forEach((input) => { input.checked = false; });
+    renderStatic();
+  });
+
+  function currentState(){ return resolveState(activeStates, spec.precedence); }
+
+  function renderStatic(){
+    const state=currentState();
+    const presentation=statePresentation(spec,state,reduceQuery.matches);
+    stateText.textContent=state.replaceAll("_"," ");
+    patternText.textContent=`${presentation.pattern.name} — ${presentation.pattern.colour} / ${presentation.pattern.motion}`;
+    indicator.style.background=colourCss(presentation.pattern.colour);
+    if(presentation.reducedMotion){
+      indicator.style.opacity=String(staticPatternLevel(presentation.pattern));
+      if(presentation.fallback){
+        reducedText.hidden=false;
+        reducedText.textContent=`${presentation.fallback.symbol} ${presentation.fallback.text}`;
+      }else{
+        reducedText.hidden=true;
+        reducedText.textContent="";
+      }
+    }else{
+      reducedText.hidden=true;
+      reducedText.textContent="";
+    }
+  }
+
+  function animate(now){
+    const presentation=statePresentation(spec,currentState(),reduceQuery.matches);
+    if(!presentation.reducedMotion){
+      indicator.style.background=colourCss(presentation.pattern.colour);
+      indicator.style.opacity=String(patternLevelAt(presentation.pattern,now,spec));
+    }
+    requestAnimationFrame(animate);
+  }
+
+  reduceQuery.addEventListener?.("change",renderStatic);
+  renderStatic();
+  requestAnimationFrame(animate);
+</script>
+</body>
+</html>

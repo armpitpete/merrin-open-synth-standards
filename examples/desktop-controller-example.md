@@ -1,8 +1,8 @@
 # Example — Desktop Controller
 
-This example shows how a desktop or angled performance controller can apply SLS-1 and HIL-1.
+This example shows how a desktop or angled performance controller can apply SLS-1 v3 and HIL-1.
 
-It is illustrative, not mandatory.
+It is illustrative, not human-recognition evidence.
 
 ## Device
 
@@ -26,84 +26,37 @@ secondary controls
 rear/lower rear patch edge
 ```
 
-## Suggested physical layout
+## SLS-1 v3 state map
 
-```text
-REAR EDGE / PATCH EDGE
-CV OUTS | GATE OUTS | CLOCK | MIDI | USB | POWER
-
-SECONDARY CONTROLS
-mode, scale, range, calibration, panic
-
-MAIN PERFORMANCE SURFACE
-[left hand: timing/events]     [right hand: pitch/harmony]
-
-PLAYER SIDE
-```
-
-## HIL-1 notes
-
-- Patch cables leave from the rear edge.
-- No cable crosses the main hand surface.
-- Large performance controls are central.
-- Service/calibration controls stay away from the performance surface.
-- Panic/stop remains reachable.
-- Left-hand and right-hand roles are visually clear.
-
-## SLS-1 state map
-
-| Behaviour | SLS-1 state | Pattern |
+| Behaviour | State | Expression |
 |---|---|---|
-| Controller powered and ready | IDLE | STEADY_DIM |
-| Performance surface active | ACTIVE | STEADY_MID |
-| Shift/alternate layer held | ALT / SHIFTED | BREATHE_SLOW |
-| Output muted | MUTED / BYPASSED | PULSE_0p5HZ |
-| Calibration armed | ARMED | DOUBLE_PULSE_WIDE |
-| Confirm calibration save | CONFIRM REQUIRED | TRIPLE_PULSE_WIDE |
-| Writing calibration | RECORD / WRITE | PULSE_1HZ |
-| External clock lost | CLOCK LOST | PULSE_0p5HZ or documented clock-lost pattern |
-| Fault or unsafe state | ERROR | STEADY_BRIGHT |
+| Controller ready | IDLE | white dim steady |
+| Performance surface active | ACTIVE | green steady |
+| Shift/alternate layer | ALT / SHIFTED | blue steady |
+| Output muted | MUTED / BYPASSED | white slow flash |
+| Calibration armed | ARMED | amber steady at labelled calibration control |
+| Confirm calibration save | CONFIRM REQUIRED | amber slow flash at labelled confirm control |
+| Writing calibration | RECORD / WRITE | red steady at labelled write control |
+| External clock lost | CLOCK LOST | blue slow flash at CLOCK label |
+| Non-fatal degraded state | WARNING | amber fast flash + warning carrier |
+| Fault / unsafe state | ERROR | red fast flash + error carrier |
 
-## LED placement
+## Placement
 
-Use local lights for local functions.
+Use local lights for local functions. Do not make one anonymous light carry calibration, clock, write, warning, and error by memorised pulse words.
 
-```text
-- left-hand event state light near left-hand event surface
-- right-hand harmony state light near right-hand harmony surface
-- global error/status light near title or system area
-- calibration/confirm light near calibration/save control
-```
-
-Do not hide armed, confirm, or error lights in decorative lighting.
-
-## Compliance notes
-
-```text
-HIL-1:
-- Main performance surface clear of cables: yes
-- Patching placed at rear/lower edge: yes
-- Diagnostics separated: yes
-- Panic/stop accessible: yes
-- Left/right hand roles readable: yes
-
-SLS-1:
-- State patterns documented: yes
-- Calibration write uses arm/confirm/write states: yes
-- Clock lost distinct from normal activity: yes
-- No strobe or random flicker: yes
-```
+Critical states require contextual reinforcement through label, position, text, symbol, or a dedicated indicator.
 
 ## Common mistake
 
 Weak design:
 
 ```text
-CV jacks placed across the centre because there was empty space.
+A single light uses several counted rhythms for every controller state.
 ```
 
 Better design:
 
 ```text
-Keep the centre playable. Put patching at the rear, lower rear, or side edge.
+Use simple colour/motion and put the indicator where its meaning is obvious.
 ```

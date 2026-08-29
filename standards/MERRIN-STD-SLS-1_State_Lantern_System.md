@@ -1,185 +1,141 @@
 ---
 standard_id: MERRIN-STD-SLS-1
 title: State Lantern System
-version: v1.0-draft
+version: v3.0-draft
 status: Draft
 scope: State and mode LEDs/status lights for synth modules, browser synths, controllers, and performance instruments.
 license: CC-BY-4.0
+machine_contract: standards/data/sls-1-v3.0-kiss.json
 ---
 
 # MERRIN-STD-SLS-1 — State Lantern System
 
 ## 1. Purpose
 
-SLS-1 defines a consistent, no-confusion light language for state LEDs and status lights.
+SLS-1 defines a small, consistent visual language for instrument state.
 
-It exists to stop every module or app inventing a private LED language.
+The v3 KISS rule is:
 
-In live use, a player should not have to guess whether a blinking light means:
+> **Colour carries category. Motion carries urgency. Context carries exact local meaning.**
 
-- active
-- muted
-- armed
-- recording
-- waiting for confirmation
-- warning
-- error
-- decorative activity
+A player should not have to decode a Morse-like pulse alphabet to understand an instrument.
 
-SLS-1 makes status readable quickly and safely.
+## 2. Human model
 
-## 2. Outcome
+Indicators are learned interfaces.
 
-An SLS-1 compliant instrument should make states readable in one glance.
-
-The system should ensure:
-
-- states are readable in one second or less
-- destructive actions are hard to trigger by accident
-- risk states are never hidden
-- rhythm carries meaning
-- colour reinforces meaning but is not the only carrier
-- state LEDs do not behave like decorative lights or meters
-
-## 3. Scope
-
-### Applies to
-
-SLS-1 applies to any light that communicates:
-
-- state
-- mode
-- arm/confirm flow
-- record/write/save state
-- mute/bypass state
-- warning
-- error
-- transport or clock state
-- safety condition
-
-### Does not apply to
-
-SLS-1 does not govern:
-
-- purely decorative lighting
-- audio meters
-- clipping indicators
-- signal-present indicators
-- aesthetic animation that is clearly separate from state signalling
-
-Activity indicators must not override or mask safety state indicators.
-
-## 4. Core principles
-
-1. **Light must mean something.** A state LED must not blink decoratively.
-2. **Rhythm beats colour.** Assume single-colour LEDs first.
-3. **Colour reinforces meaning.** Do not rely on colour alone.
-4. **Readable in one second.** The important state must be recognisable fast.
-5. **No hidden states.** If behaviour changes, the light must make that visible.
-6. **Fail safe.** On crash, reset, or ambiguity, show IDLE or ERROR, never ARMED, CONFIRM, or WRITE.
-7. **Small alphabet.** Reuse a short set of named patterns.
-8. **Safety states override activity.** Pretty lights never outrank risk information.
-
-## 5. Definitions
-
-| Term | Meaning |
-|---|---|
-| State light | A light communicating behavioural state, not audio level. |
-| Pulse | Light turns on, then returns off. One clear on-event. |
-| Breathe | Smooth fade up/down with no hard blink edge. |
-| Dim | Low steady brightness. |
-| Mid | Normal readable brightness. |
-| Bright | High warning/error brightness, not painful. |
-| Decorative light | Light used for appearance only; must not be confused with state. |
-
-## 6. Canonical states
-
-### 6.1 Mandatory core states
-
-| State | Meaning |
-|---|---|
-| IDLE | Default. Nothing engaged or waiting. |
-| ACTIVE | Function/path/mode is engaged. |
-| ALT / SHIFTED | Alternate layer is active. |
-| MUTED / BYPASSED | Path/output intentionally suppressed. |
-| ARMED | Risky or high-impact action staged, awaiting confirm. |
-| CONFIRM REQUIRED | Explicitly requesting confirmation now. |
-| RECORD / WRITE | Actively recording, writing, saving, or committing. |
-| WARNING | Non-fatal issue; degraded behaviour possible. |
-| ERROR | Fault requiring user action or blocking correct behaviour. |
-
-### 6.2 Optional clock/transport states
-
-Use only on clock-aware modules or apps.
-
-| State | Meaning |
-|---|---|
-| CLOCK PRESENT | External clock detected and in use. |
-| CLOCK LOST | Expected clock missing or invalid. |
-| TRANSPORT RUN | Sequencer/transport running. |
-| TRANSPORT STOP | Sequencer/transport stopped but ready. |
-
-### 6.3 Optional focus states
-
-| State | Meaning |
-|---|---|
-| SELECTED / FOCUSED | Channel, part, scene, or parameter is under edit. |
-| LOCKED / HELD | A latched state persists until deliberately cleared. |
-
-## 7. Pattern library
-
-### 7.1 Hard sensory safety rule
-
-No state pattern may exceed:
+The normal sequence is:
 
 ```text
-3 visible pulses per second
+notice an indicator
+→ investigate what it means
+→ read the product key/manual
+→ remember the convention on later encounters
 ```
 
-measured as on-pulses in any rolling one-second window.
+SLS-1 therefore does **not** require an unfamiliar person to infer an exact state name on first sight.
 
-No strobe-like pattern is allowed.
+The indicator has three jobs:
 
-### 7.2 Recommended timing
+1. make an important condition noticeable;
+2. provide a simple category/urgency cue;
+3. sit in enough context that the exact meaning can be looked up and learned.
 
-| Parameter | Recommendation |
+The documentation has the complementary job of giving the exact meaning on first encounter.
+
+This is the acceptance model for v3. A one-second blind recognition quiz is not a conformance gate.
+
+## 3. Outcome
+
+A compliant implementation should make important state noticeable, interpretable with its context/documentation, and progressively familiar through repeated use.
+
+It must:
+
+- use only the canonical semantic colours and three motion classes;
+- avoid counted pulses, short–long codes, long–short codes, breathing alphabets, random flicker, and decorative state animations;
+- use a label, symbol, position, shape, or other non-colour carrier for every critical state;
+- keep state indication separate from meters and decorative activity;
+- fail to IDLE or ERROR rather than falsely displaying ARMED, CONFIRM REQUIRED, or RECORD / WRITE;
+- provide a static text/symbol equivalent for animated critical software indicators when reduced motion is requested;
+- document the colour categories, motion categories, critical meanings, and local labels/symbols.
+
+The design target is **simple learnability and consistent reuse**, not first-sight semantic guessing.
+
+## 4. KISS vocabulary
+
+### 4.1 Colours
+
+| Colour | Meaning |
 |---|---|
-| Pulse width | 120–200 ms on |
-| Minimum pulse gap | 200 ms or more off |
-| Breathe cycle | About 2 seconds |
-| Signature time | Pattern identity readable within 1 second |
+| White | neutral / idle |
+| Green | normal / active |
+| Blue | mode / informational state |
+| Amber | attention / staged action |
+| Red | write / fault category |
 
-### 7.3 Canonical patterns
+Colour is a category cue. It is never sufficient by itself for a critical state.
 
-| Pattern ID | Name | Loop | Rhythm | Intended use |
-|---|---|---:|---|---|
-| P0 | STEADY_DIM | infinite | On at dim level | IDLE |
-| P1 | STEADY_MID | infinite | On at mid level | ACTIVE |
-| P2 | STEADY_BRIGHT | infinite | On at bright level | ERROR beacon |
-| P3 | BREATHE_SLOW | 2s | Smooth fade up/down | ALT / SHIFTED or focus |
-| P4 | PULSE_1HZ | 1s | One pulse each second | RECORD / WRITE |
-| P5 | PULSE_0p5HZ | 2s | One pulse every two seconds | MUTED / BYPASSED or CLOCK LOST |
-| P6 | DOUBLE_PULSE_WIDE | 2s | pulse, gap, pulse, rest | ARMED |
-| P7 | TRIPLE_PULSE_WIDE | 2s | pulse, gap, pulse, gap, pulse, rest | CONFIRM REQUIRED |
-| P8 | TICK_OVERLAY | 4s | one brief tick every four seconds | optional overlay or heartbeat |
+### 4.2 Motion
 
-## 8. Forbidden patterns
+SLS-1 v3 permits exactly three temporal behaviours:
 
-Non-compliant state patterns include:
+| Motion | Timing | Meaning |
+|---|---:|---|
+| Steady | no animation | state is present |
+| Slow flash | 1000 ms cycle, 500 ms on | attention/action is required |
+| Fast flash | 500 ms cycle, 250 ms on | urgent/fault condition |
 
-- more than 3 pulses per second
-- strobe or near-strobe blinking
-- random flicker on a state LED
-- meter-like animation on a state LED
-- decorative blinking on a state LED
-- warning and armed states that can be mistaken for each other
-- colour-only state differences without rhythm/position/label support
+No other temporal code is canonical.
 
-## 9. State precedence
+SLS-1 v3 forbids double flashes, triple flashes, counted pulse groups, short–long or long–short signatures, breathing as a state code, random flicker, and strobe-like state signalling.
 
-When multiple states are active, show the highest-precedence state.
+### 4.3 Context
 
-Highest wins:
+Exact local meaning comes from the control/indicator context and documentation.
+
+Examples:
+
+- an amber steady light next to **ARM** tells the user that the ARM condition is active;
+- an amber slow-flashing light next to **CONFIRM** tells the user that confirmation needs attention;
+- a red steady light next to **WRITE** tells the user that the WRITE condition is active.
+
+The lamp does not need to encode the words ARM, CONFIRM, or WRITE in its rhythm. The label already carries that information.
+
+Do not force one anonymous lamp to encode a large state dictionary.
+
+## 5. Canonical states
+
+| State | Default visual |
+|---|---|
+| IDLE | white, dim, steady |
+| ACTIVE | green, steady |
+| ALT / SHIFTED | blue, steady |
+| MUTED / BYPASSED | white, slow flash |
+| ARMED | amber, steady |
+| CONFIRM REQUIRED | amber, slow flash |
+| RECORD / WRITE | red, steady |
+| WARNING | amber, fast flash |
+| ERROR | red, fast flash |
+| CLOCK LOST | blue, slow flash |
+
+The machine-readable source of truth is `standards/data/sls-1-v3.0-kiss.json`.
+
+## 6. Single-indicator rule
+
+A single **unlabelled global indicator** may communicate only broad category/state:
+
+- IDLE;
+- ACTIVE;
+- WARNING;
+- ERROR.
+
+If an implementation needs ARMED, CONFIRM REQUIRED, RECORD / WRITE, CLOCK LOST, or another exact critical meaning, it must add a secondary carrier such as a fixed label or labelled position, text, a symbol/icon, a separate dedicated indicator, or another accessible non-colour cue.
+
+Adding context is preferred to adding a more complicated blink language.
+
+## 7. Precedence
+
+When one global surface must choose among active states, highest precedence wins:
 
 1. ERROR
 2. CONFIRM REQUIRED
@@ -192,187 +148,81 @@ Highest wins:
 9. ACTIVE
 10. IDLE
 
-## 10. Tie-break rules
+Precedence decides what is shown. It does not relax the secondary-carrier rule.
 
-If multiple same-level states exist:
+## 8. Risky/destructive action flow
 
-1. show the highest severity
-2. if equal, show the most recent
-3. if equal, prefer the selected/focused target
-4. if still equal, use module-defined order and document it
-
-## 11. Global vs local indicators
-
-If an instrument has a global status light:
-
-- the global light must show the highest-precedence state anywhere in the instrument
-- local lights may show local states
-- local lights must not contradict the global safety truth
-
-Example:
+For staged risky actions:
 
 ```text
-One channel is active.
-Another channel is armed for overwrite.
-Global state = ARMED.
-Local channel lights may still show local detail.
-```
-
-## 12. Required state-to-pattern map
-
-A compliant instrument must publish its local mapping.
-
-Default map:
-
-| Canonical state | Default pattern |
-|---|---|
-| IDLE | P0 |
-| ACTIVE | P1 |
-| ALT / SHIFTED | P3 |
-| MUTED / BYPASSED | P5 |
-| ARMED | P6 |
-| CONFIRM REQUIRED | P7 |
-| RECORD / WRITE | P4 |
-| WARNING | distinct from ARMED and CONFIRM REQUIRED |
-| ERROR | P2, optional P8 overlay |
-| CLOCK LOST | P5 or another low-urgency distinct pattern |
-
-WARNING must not be confusable with ARMED.
-
-If WARNING uses a new pattern, document it clearly and keep it within the 3 pulses/sec safety rule.
-
-## 13. Behaviour examples
-
-| Behaviour | Canonical state |
-|---|---|
-| Shift held | ALT / SHIFTED |
-| Channel muted | MUTED / BYPASSED |
-| About to overwrite pattern | ARMED |
-| Waiting for second press to commit | CONFIRM REQUIRED |
-| Saving to flash/local storage | RECORD / WRITE |
-| Missing SD card or missing required file | ERROR |
-| External clock vanishes mid-run | CLOCK LOST |
-| Mode active but safe | ACTIVE |
-
-## 14. Implementation rules
-
-### 14.1 Single resolver rule
-
-Do not let LED patterns compete directly.
-
-Use this flow:
-
-```text
-collect active states
+safe state
+↓ deliberate arm action
+ARMED
+↓ deliberate request to proceed
+CONFIRM REQUIRED
+↓ explicit confirmation
+RECORD / WRITE while the operation actually occurs
 ↓
-choose highest-precedence effective state
-↓
-render pattern for effective state
+IDLE / ACTIVE on success
+or
+WARNING / ERROR on degraded/failing outcome
 ```
 
-### 14.2 Boot/reset fail-safe
+Lighting does not make an unsafe command safe. The command flow itself must remain deliberate.
 
-During boot, reset, or unknown state:
+## 9. Documentation and learning
 
-- show IDLE if the instrument is safe
-- show ERROR if the instrument cannot verify safe state
-- never show ARMED, CONFIRM REQUIRED, or RECORD / WRITE unless that state is true
+Every conforming product must provide a concise indicator key in its normal documentation.
 
-### 14.3 Brightness
+The key must identify:
 
-At minimum, provide readable dim/mid/bright levels.
+- the product's SLS-1 colours and their categories;
+- steady, slow-flash, and fast-flash meanings;
+- every critical state used by the product;
+- the label, symbol, or position associated with each critical indicator.
 
-Brightness should be:
+A user encountering an unfamiliar indicator should be able to investigate and determine its meaning without decoding a pulse sequence.
 
-- visible in low light
-- not painful at close range
-- consistent within one instrument
+The intended learning effect is ordinary interface learning: after looking up a convention, later encounters should require less investigation.
 
-### 14.4 Activity separation
+SLS-1 does not require users to memorise the entire vocabulary before operating the product.
 
-State lights must not animate like audio meters.
+## 10. Accessibility and sensory safety
 
-If an activity meter and a state light share a physical LED, safety state must take priority.
+Critical states require at least one non-colour carrier in addition to colour/motion.
 
-## 15. Accessibility rules
+For software surfaces with reduced motion:
 
-Do not make colour the only signal.
+- animation must stop;
+- critical meaning must remain available through text and/or symbol;
+- the resulting state must remain visibly distinct.
 
-Use at least two of:
+No SLS-1 v3 pattern may exceed two visible on-events in any rolling second.
 
-- rhythm
-- label
-- position
-- shape/icon
-- brightness
-- screen text
-- tactile grouping
+## 11. Human evidence
 
-Avoid rapid flashing, flicker, and ambiguous decorative effects.
+Abstract browser recognition quizzes are **research tools, not SLS-1 conformance gates**.
 
-## 16. Compliance tests
+Two v3 research runs demonstrated why:
 
-### Test 1 — one-second recognition
+- a blind anonymous-light test scored 17/21 (81.0%) and mainly failed on exact action-state naming;
+- a complete labelled-panel test shown for one second and hidden before answer scored 14/21 (66.7%), indicating the harness had become a visual-search/short-term-memory task rather than a realistic indicator-use task.
 
-Goal: identify the displayed state in one second or less at normal playing distance.
+These failures remain valid negative evidence for those exact test designs. They do not justify adding more flash patterns.
 
-Pass criteria:
+Human evidence should instead come from realistic implementations and ask:
 
-- 90% or better recognition overall
-- 100% recognition for ERROR, ARMED, CONFIRM REQUIRED, and RECORD / WRITE
-- no ARMED/WARNING confusion
+1. Is an important state noticeable during normal use?
+2. When unfamiliar, can the user find and understand the explanation?
+3. Does the documentation resolve the exact meaning correctly?
+4. Does repeated use make the convention easier to recognise without increasing code complexity?
 
-### Test 2 — mis-press safety
+A browser mock-up may help answer these questions, but it must not substitute an artificial memory test for real use.
 
-Goal: accidental destructive actions do not occur under distracted use.
+## 12. Conformance boundary
 
-Pass criteria:
+Repository validation can prove that the v3 machine contract is internally consistent and keeps the KISS vocabulary bounded.
 
-- zero accidental destructive actions across 20 attempts
-- ARMED and CONFIRM REQUIRED appear reliably during staged flows
+It cannot prove noticeability on every physical product, colour discrimination for every user, physical LED performance, ambient-light performance, hardware crash/brownout behaviour, player acceptance, learning retention, or multi-implementation adoption.
 
-### Test 3 — crash/reset fail-safe
-
-Goal: LEDs do not lie during reset, hang, crash, or brownout.
-
-Pass criteria:
-
-- on fault, LEDs go to IDLE or ERROR
-- LEDs never show ARMED, CONFIRM REQUIRED, or RECORD / WRITE unless true after recovery
-
-### Test 4 — sensory safety
-
-Goal: patterns remain safe and non-strobing.
-
-Pass criteria:
-
-- no pattern exceeds 3 pulses/sec
-- no random flicker
-- no strobe-like behaviour
-
-## 17. Required conformance block
-
-Each implementing project should include this block in its docs:
-
-```text
-SLS-1 conformance
-Date tested:
-Firmware/app version:
-Tester:
-State lights tested:
-Patterns used:
-Colour dependencies:
-One-second recognition result:
-Mis-press safety result:
-Crash/reset result:
-Sensory safety result:
-Known exceptions:
-```
-
-## 18. Design note
-
-SLS-1 is not anti-beauty.
-
-It says beauty must not make the instrument harder or less safe to use.
-
-Decorative lighting is allowed only when it cannot be mistaken for state, safety, write, arm, confirm, warning, or error information.
+SLS-1 remains **Draft** while implementation evidence accumulates. Independent review may assess the specification before such implementation evidence exists, provided claims remain inside this boundary.
