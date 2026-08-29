@@ -18,7 +18,11 @@ export function buildRecognitionTrials(spec, seed = 0x51a71e) {
       const pattern = spec.patterns[spec.state_defaults[state]];
       const motion = spec.allowed_motion[pattern.motion];
       const cycle = Number(motion.cycle_ms || 1000);
-      trials.push({state, phase_ms: Math.floor(rng() * cycle)});
+      trials.push({
+        state,
+        phase_ms: Math.floor(rng() * cycle),
+        slot: {...gate.slots[state]},
+      });
     }
   }
 
