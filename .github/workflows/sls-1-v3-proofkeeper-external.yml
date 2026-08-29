@@ -1,3 +1,4 @@
+# Retry after API billing credit restoration on 2026-08-29.
 name: SLS-1 v3 independent Proofkeeper exact-head review
 
 on:
