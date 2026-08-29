@@ -68,6 +68,18 @@ class SLS1ValidatorTests(unittest.TestCase):
             "recognition gate repetitions_per_state must be 3",
         )
 
+    def test_rejects_blind_single_light_gate(self) -> None:
+        self.assert_invalid(
+            lambda data: data["recognition_gate"].update(presentation="blind single light"),
+            "recognition gate must use the complete labelled panel",
+        )
+
+    def test_rejects_missing_confirm_context(self) -> None:
+        self.assert_invalid(
+            lambda data: data["recognition_gate"]["slots"]["CONFIRM_REQUIRED"].update(label="STATUS"),
+            "recognition gate slots must match the fixed KISS context map",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
