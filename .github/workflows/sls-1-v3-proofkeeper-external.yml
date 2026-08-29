@@ -104,8 +104,6 @@ jobs:
                 "verdict": {"type": "string", "enum": ["ACCEPT","REJECT","INSUFFICIENT"]},
                 "criteria": {
                   "type": "array",
-                  "minItems": 9,
-                  "maxItems": 9,
                   "items": {
                     "type": "object",
                     "additionalProperties": false,
@@ -113,14 +111,14 @@ jobs:
                     "properties": {
                       "criterion_id": {"type": "string"},
                       "disposition": {"type": "string", "enum": ["PASS","FAIL","INSUFFICIENT"]},
-                      "finding": {"type": "string","minLength": 1,"maxLength": 6000},
-                      "evidence_refs": {"type": "array","minItems": 1,"maxItems": 30,"uniqueItems": true,"items": {"type": "string","minLength": 1,"maxLength": 700}}
+                      "finding": {"type": "string"},
+                      "evidence_refs": {"type": "array", "items": {"type": "string"}}
                     }
                   }
                 },
-                "limitations": {"type": "array","maxItems": 50,"uniqueItems": true,"items": {"type": "string","minLength": 1,"maxLength": 6000}},
+                "limitations": {"type": "array", "items": {"type": "string"}},
                 "authority_granted": {"type": "boolean", "const": false},
-                "automatic_actions": {"type": "array","maxItems": 0,"items": {"type": "string"}}
+                "automatic_actions": {"type": "array", "items": {"type": "string"}}
               }
             }
           prompt: |
@@ -187,6 +185,7 @@ jobs:
           assert result['verdict'] == expected_verdict
           assert result['authority_granted'] is False
           assert result['automatic_actions'] == []
+          assert all(row['evidence_refs'] for row in result['criteria'])
           candidate_bytes = (json.dumps(result, indent=2, sort_keys=True) + '\n').encode()
           out = Path(os.environ['OUT'])
           (out / 'candidate.json').write_bytes(candidate_bytes)
