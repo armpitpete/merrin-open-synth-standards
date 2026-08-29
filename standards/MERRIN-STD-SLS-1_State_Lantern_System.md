@@ -61,15 +61,7 @@ SLS-1 v3 permits exactly three temporal behaviours:
 
 No other temporal code is canonical.
 
-In particular, SLS-1 v3 forbids:
-
-- double flashes;
-- triple flashes;
-- counted pulse groups;
-- short–long or long–short signatures;
-- breathing as a state code;
-- random flicker;
-- strobe-like state signalling.
+SLS-1 v3 forbids double flashes, triple flashes, counted pulse groups, short–long or long–short signatures, breathing as a state code, random flicker, and strobe-like state signalling.
 
 ### 3.3 Context
 
@@ -79,7 +71,7 @@ Examples:
 
 - an amber steady light next to **ARM** means ARMED;
 - an amber slow-flashing light next to **CONFIRM** means CONFIRM REQUIRED;
-- a red steady light next to **REC** or **WRITE** means RECORD / WRITE.
+- a red steady light next to **WRITE** means RECORD / WRITE.
 
 Do not force one anonymous lamp to encode a large state dictionary.
 
@@ -102,22 +94,16 @@ The machine-readable source of truth is `standards/data/sls-1-v3.0-kiss.json`.
 
 ## 5. Single-indicator rule
 
-A single **unlabelled global indicator** may communicate only these broad states:
+A single **unlabelled global indicator** may communicate only:
 
 - IDLE;
 - ACTIVE;
 - WARNING;
 - ERROR.
 
-If an implementation needs to communicate ARMED, CONFIRM REQUIRED, RECORD / WRITE, CLOCK LOST, or another exact critical meaning, it must add a secondary carrier such as:
+If an implementation needs ARMED, CONFIRM REQUIRED, RECORD / WRITE, CLOCK LOST, or another exact critical meaning, it must add a secondary carrier such as a fixed label or labelled position, text, a symbol/icon, a separate dedicated indicator, or another accessible non-colour cue.
 
-- a fixed label or labelled position;
-- text;
-- a symbol/icon;
-- a separate dedicated indicator;
-- another accessible non-colour cue.
-
-This is deliberate. Adding context is preferred to adding a more complicated blink language.
+Adding context is preferred to adding a more complicated blink language.
 
 ## 6. Precedence
 
@@ -172,17 +158,26 @@ No SLS-1 v3 pattern may exceed two visible on-events in any rolling second.
 
 The v3 gate asks:
 
-> **Can an unfamiliar person identify the important device states at a glance with minimal instruction?**
+> **Can an unfamiliar person identify the important device states at a glance from the complete intended presentation?**
 
-The canonical gate is defined in the machine contract and reference harness.
+The gate must test the complete presentation, not an anonymous light stripped of its required context.
+
+The canonical reference panel uses fixed labelled positions:
+
+```text
+SYSTEM: STATUS | WARNING | ERROR
+ACTION: ARM | CONFIRM | WRITE
+```
+
+IDLE and ACTIVE share the STATUS position and are distinguished by the simple colour state. Exact critical action states use the labelled ACTION positions required by the KISS design.
 
 Requirements:
 
-- tester has not previously studied or used SLS-1 v3;
+- tester has not previously studied or used SLS-1 v3 and has not completed an earlier v3 recognition run;
 - legend exposure is at most 20 seconds;
-- each trial is observed for exactly one second;
+- each trial shows the complete panel for exactly one second;
 - seven core states are tested three times each: 21 trials total;
-- first completed run is the evidence run;
+- first completed run for that exact candidate is the evidence run;
 - no practice, restart, or repeat to improve score.
 
 Pass requires:
@@ -192,20 +187,20 @@ Pass requires:
 - zero ERROR ↔ ACTIVE confusion;
 - zero RECORD / WRITE ↔ ERROR confusion.
 
-The browser gate is human-recognition evidence only. It does not prove real LED brightness, viewing distance, ambient-light performance, or hardware reliability.
+### 9.1 Superseded blind-light gate
+
+The first v3 candidate tested an anonymous single light and scored 17/21. CONFIRM REQUIRED and RECORD / WRITE were each recognised only once in three attempts.
+
+That run remains valid negative evidence for that exact candidate. It demonstrated that the blind single-light presentation contradicted the v3 design rule by removing the contextual carrier needed for exact critical states.
+
+The corrective gate therefore tests the full labelled presentation. It does **not** add new flash codes.
+
+The browser gate remains human-recognition evidence only. It does not prove real LED brightness, viewing distance, ambient-light performance, or hardware reliability.
 
 ## 10. Conformance boundary
 
-Repository validation can prove the v3 machine contract is internally consistent.
+Repository validation can prove the v3 machine contract and test harness are internally consistent.
 
-It cannot prove:
-
-- unfamiliar-person recognition;
-- colour discrimination for every user;
-- physical LED performance;
-- ambient-light performance;
-- hardware crash/brownout behaviour;
-- player acceptance;
-- multi-implementation adoption.
+It cannot prove unfamiliar-person recognition, colour discrimination for every user, physical LED performance, ambient-light performance, hardware crash/brownout behaviour, player acceptance, or multi-implementation adoption.
 
 SLS-1 remains **Draft** until its human gate and later physical evidence support a stronger maturity claim.
