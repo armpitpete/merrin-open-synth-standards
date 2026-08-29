@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import importlib.util
-import json
 import unittest
 from pathlib import Path
 
@@ -19,7 +18,8 @@ module_spec.loader.exec_module(validate_sls1)
 
 class SLS1ValidatorTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
+        self.raw_spec = SPEC_PATH.read_text(encoding="utf-8")
+        self.spec = validate_sls1.loads_contract(self.raw_spec)
 
     def assert_invalid(self, mutator, fragment: str) -> None:
         candidate = copy.deepcopy(self.spec)
@@ -30,8 +30,65 @@ class SLS1ValidatorTests(unittest.TestCase):
             f"expected error containing {fragment!r}; got {errors!r}",
         )
 
+    def assert_duplicate_member_rejected(self, raw: str, member: str) -> None:
+        self.assertNotEqual(raw, self.raw_spec, "duplicate-member fixture injection did not alter the source")
+        with self.assertRaises(validate_sls1.DuplicateJSONMemberError) as caught:
+            validate_sls1.loads_contract(raw)
+        self.assertIn(repr(member), str(caught.exception))
+
     def test_current_spec_passes(self) -> None:
         self.assertEqual(validate_sls1.validate(self.spec), [])
+
+    def test_rejects_duplicate_top_level_allowed_motion_member(self) -> None:
+        raw = self.raw_spec.replace(
+            '  "allowed_motion": {\n',
+            '  "allowed_motion": {"double_flash": {"kind": "flash", "cycle_ms": 1000, "on_ms": 100}},\n'
+            '  "allowed_motion": {\n',
+            1,
+        )
+        self.assert_duplicate_member_rejected(raw, "allowed_motion")
+
+    def test_rejects_duplicate_event_ceiling_member(self) -> None:
+        raw = self.raw_spec.replace(
+            '  "max_visible_on_events_per_rolling_second": 2,\n',
+            '  "max_visible_on_events_per_rolling_second": 99,\n'
+            '  "max_visible_on_events_per_rolling_second": 2,\n',
+            1,
+        )
+        self.assert_duplicate_member_rejected(raw, "max_visible_on_events_per_rolling_second")
+
+    def test_rejects_duplicate_single_global_indicator_member(self) -> None:
+        raw = self.raw_spec.replace(
+            '  "single_unlabelled_global_indicator_states": ["IDLE", "ACTIVE", "WARNING", "ERROR"],\n',
+            '  "single_unlabelled_global_indicator_states": ["IDLE", "ACTIVE", "ARMED", "WARNING", "ERROR"],\n'
+            '  "single_unlabelled_global_indicator_states": ["IDLE", "ACTIVE", "WARNING", "ERROR"],\n',
+            1,
+        )
+        self.assert_duplicate_member_rejected(raw, "single_unlabelled_global_indicator_states")
+
+    def test_rejects_duplicate_nested_motion_kind(self) -> None:
+        raw = self.raw_spec.replace(
+            '    "steady": {"kind": "steady"},\n',
+            '    "steady": {"kind": "flash", "kind": "steady"},\n',
+            1,
+        )
+        self.assert_duplicate_member_rejected(raw, "kind")
+
+    def test_rejects_duplicate_nested_documentation_required(self) -> None:
+        raw = self.raw_spec.replace(
+            '    "required": true,\n',
+            '    "required": false, "required": true,\n',
+            1,
+        )
+        self.assert_duplicate_member_rejected(raw, "required")
+
+    def test_rejects_duplicate_nested_reduced_motion_text(self) -> None:
+        raw = self.raw_spec.replace(
+            '    "ERROR": {"text": "Error", "symbol": "×", "animation": "none"},\n',
+            '    "ERROR": {"text": "All clear", "text": "Error", "symbol": "×", "animation": "none"},\n',
+            1,
+        )
+        self.assert_duplicate_member_rejected(raw, "text")
 
     def test_rejects_unknown_top_level_field(self) -> None:
         self.assert_invalid(
