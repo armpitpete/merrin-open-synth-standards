@@ -1,10 +1,12 @@
 # SLS-1 v3 independent Proofkeeper review criteria
 
-Target candidate: `89ff776f0da1421b6fdda581171e157b7c9f0909`
+Target candidate: `52fe6fa7c08af647b324ed396861edd0db9248f5`
 
 This file is review control material, not candidate evidence. The reviewer must inspect the exact target checkout and treat this file only as the frozen falsification contract.
 
 The review is deliberately bounded to repository-provable claims. It must not infer physical LED brightness, ambient-light performance, universal accessibility, learning retention, or player acceptance from repository evidence.
+
+This is a fresh re-review after predecessor `89ff776f0da1421b6fdda581171e157b7c9f0909` was rejected for duplicate JSON object-member ambiguity. The reviewer must independently retest that bypass and adjacent parser/consumer exactness routes; the prior verdict neither proves nor disproves the corrected candidate.
 
 A criterion is PASS only when the exact target evidence establishes it. Material contradiction is FAIL. Missing evidence is INSUFFICIENT. Any FAIL forces overall REJECT. Otherwise any INSUFFICIENT forces overall INSUFFICIENT. Only all PASS permits ACCEPT.
 
@@ -42,8 +44,8 @@ The candidate may claim repository-verifiable consistency, bounded vocabulary, c
 
 ### V3-09 — Exact-head mechanical evidence is valid
 
-`.proofkeeper-runtime/workflow-runs.json` must show a completed successful `Validate SLS-1` pull-request workflow for exact target SHA `89ff776f0da1421b6fdda581171e157b7c9f0909`. A successful run for another SHA, a pending/cancelled run, or absence of the required exact-head run is not PASS.
+`.proofkeeper-runtime/workflow-runs.json` must show a completed successful `Validate SLS-1` pull-request workflow for exact target SHA `52fe6fa7c08af647b324ed396861edd0db9248f5`. A successful run for another SHA, a pending/cancelled run, or absence of the required exact-head run is not PASS.
 
 ### V3-10 — No material semantic bypass remains
 
-Adversarially inspect the complete candidate for a practical route that would let an implementation claim SLS-1 v3 conformance while reintroducing forbidden temporal vocabulary, overloading the single global indicator, omitting required critical-state context/documentation, weakening reduced-motion/safety meaning, or otherwise satisfying mechanical tests while violating the written contract. PASS requires no material bypass supported by the exact repository evidence.
+Adversarially inspect the complete candidate for a practical route that would let an implementation claim SLS-1 v3 conformance while reintroducing forbidden temporal vocabulary, overloading the single global indicator, omitting required critical-state context/documentation, weakening reduced-motion/safety meaning, or otherwise satisfying mechanical tests while violating the written contract. Explicitly retest duplicate JSON object members at top-level and nested levels, then probe adjacent parsing and consumer-divergence cases. PASS requires no material bypass supported by the exact repository evidence.
