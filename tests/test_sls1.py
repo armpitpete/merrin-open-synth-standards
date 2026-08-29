@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR_PATH = ROOT / "scripts" / "validate_sls1.py"
 SPEC_PATH = ROOT / "standards" / "data" / "sls-1-v3.0-kiss.json"
+MIGRATION_PATH = ROOT / "docs" / "SLS-1_V1_V2_TO_V3_MIGRATION.md"
 
 module_spec = importlib.util.spec_from_file_location("validate_sls1", VALIDATOR_PATH)
 validate_sls1 = importlib.util.module_from_spec(module_spec)
@@ -32,6 +33,12 @@ class SLS1ValidatorTests(unittest.TestCase):
     def test_current_spec_passes(self) -> None:
         self.assertEqual(validate_sls1.validate(self.spec), [])
 
+    def test_rejects_unknown_top_level_field(self) -> None:
+        self.assert_invalid(
+            lambda data: data.update(pulse_sequences={"hidden": [1, 2, 3]}),
+            "top-level contract keys must be exact",
+        )
+
     def test_rejects_extra_motion_class(self) -> None:
         self.assert_invalid(
             lambda data: data["allowed_motion"].update(double_flash={"kind": "flash", "cycle_ms": 1000, "on_ms": 100}),
@@ -47,19 +54,58 @@ class SLS1ValidatorTests(unittest.TestCase):
     def test_rejects_morse_like_pattern(self) -> None:
         self.assert_invalid(
             lambda data: data["patterns"]["K4"].update(name="DOUBLE_EQUAL"),
-            "Morse-like/counting pattern names are forbidden",
+            "pattern schema/value must match canonical KISS definition exactly",
+        )
+
+    def test_rejects_hidden_pattern_sequence_field(self) -> None:
+        self.assert_invalid(
+            lambda data: data["patterns"]["K4"].update(sequence=["short", "short"]),
+            "pattern schema/value must match canonical KISS definition exactly",
+        )
+
+    def test_rejects_unreferenced_pattern_injection(self) -> None:
+        self.assert_invalid(
+            lambda data: data["patterns"].update(
+                K10={"name": "HIDDEN", "colour": "amber", "motion": "steady", "brightness": "mid"}
+            ),
+            "patterns must contain exactly canonical K0-K9",
+        )
+
+    def test_rejects_semantic_state_remap(self) -> None:
+        self.assert_invalid(
+            lambda data: data["state_defaults"].update(ERROR="K1"),
+            "state_defaults must match the canonical state-to-pattern mapping exactly",
+        )
+
+    def test_rejects_deleted_critical_contract_lists(self) -> None:
+        def remove_contract(data: dict) -> None:
+            data.pop("critical_global_states")
+            data.pop("secondary_carrier_required")
+
+        self.assert_invalid(remove_contract, "top-level contract keys must be exact")
+
+    def test_rejects_modified_critical_state_set(self) -> None:
+        self.assert_invalid(
+            lambda data: data["critical_global_states"].remove("ERROR"),
+            "critical_global_states must contain exactly",
         )
 
     def test_rejects_missing_secondary_carrier_for_error(self) -> None:
         self.assert_invalid(
             lambda data: data["secondary_carrier_required"].remove("ERROR"),
-            "critical states missing secondary carrier requirement",
+            "secondary_carrier_required must contain exactly",
         )
 
     def test_rejects_overloaded_single_global_indicator(self) -> None:
         self.assert_invalid(
             lambda data: data["single_unlabelled_global_indicator_states"].append("ARMED"),
             "single unlabelled global indicator must be limited",
+        )
+
+    def test_rejects_precedence_remap(self) -> None:
+        self.assert_invalid(
+            lambda data: data["precedence"].reverse(),
+            "precedence must match the canonical SLS-1 v3 precedence exactly",
         )
 
     def test_rejects_first_sight_exact_state_requirement(self) -> None:
@@ -91,6 +137,11 @@ class SLS1ValidatorTests(unittest.TestCase):
             lambda data: data["human_model"].update(sequence=["memorise", "decode"]),
             "human_model sequence must be notice, investigate, lookup, learned_recognition",
         )
+
+    def test_migration_marks_abstract_quiz_as_retired_research(self) -> None:
+        migration = MIGRATION_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("The v3 gate is a separate unfamiliar-person test", migration)
+        self.assertIn("not a conformance gate", migration)
 
 
 if __name__ == "__main__":
