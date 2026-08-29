@@ -47,11 +47,11 @@
 </main>
 
 <script type="module">
-  import {colourCss, parseJsonStrict, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "./sls.mjs";
+  import {colourCss, parseSls1SpecStrict, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "./sls.mjs";
 
   const spec = await fetch("../../standards/data/sls-1-v3.0-kiss.json").then(async (response) => {
     if (!response.ok) throw new Error(`Failed to load contract: ${response.status}`);
-    return parseJsonStrict(await response.text());
+    return parseSls1SpecStrict(await response.text());
   });
 
   const activeStates = new Set(["IDLE"]);
