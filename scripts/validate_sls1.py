@@ -17,18 +17,12 @@ EXPECTED_MOTION = {
     "slow_flash": {"kind": "flash", "cycle_ms": 1000, "on_ms": 500},
     "fast_flash": {"kind": "flash", "cycle_ms": 500, "on_ms": 250},
 }
-GATE_STATES = [
-    "IDLE", "ACTIVE", "ARMED", "CONFIRM_REQUIRED",
-    "RECORD_WRITE", "WARNING", "ERROR"
-]
-EXPECTED_GATE_SLOTS = {
-    "IDLE": {"position": "SYSTEM", "label": "STATUS"},
-    "ACTIVE": {"position": "SYSTEM", "label": "STATUS"},
-    "ARMED": {"position": "ACTION", "label": "ARM"},
-    "CONFIRM_REQUIRED": {"position": "ACTION", "label": "CONFIRM"},
-    "RECORD_WRITE": {"position": "ACTION", "label": "WRITE"},
-    "WARNING": {"position": "SYSTEM", "label": "WARNING"},
-    "ERROR": {"position": "SYSTEM", "label": "ERROR"},
+EXPECTED_HUMAN_SEQUENCE = ["notice", "investigate", "lookup", "learned_recognition"]
+REQUIRED_DOCUMENTATION = {
+    "colour categories",
+    "motion categories",
+    "critical state meanings",
+    "local labels or symbols",
 }
 
 
@@ -115,25 +109,37 @@ def validate(spec: dict) -> list[str]:
         if state not in precedence:
             errors.append(f"critical global state {state} missing from precedence")
 
-    gate = spec.get("recognition_gate", {})
-    if gate.get("name") != "KISS contextual unfamiliar-person recognition":
-        errors.append("recognition gate must test the contextual presentation")
-    if gate.get("legend_max_seconds") != 20:
-        errors.append("recognition gate legend_max_seconds must be 20")
-    if gate.get("observation_ms") != 1000:
-        errors.append("recognition gate observation_ms must be 1000")
-    if gate.get("presentation") != "complete labelled panel":
-        errors.append("recognition gate must use the complete labelled panel")
-    if gate.get("slots") != EXPECTED_GATE_SLOTS:
-        errors.append("recognition gate slots must match the fixed KISS context map")
-    if gate.get("repetitions_per_state") != 3:
-        errors.append("recognition gate repetitions_per_state must be 3")
-    if gate.get("states") != GATE_STATES:
-        errors.append("recognition gate states must be the seven canonical KISS gate states")
-    if float(gate.get("minimum_overall_accuracy", 0)) != 0.90:
-        errors.append("recognition gate minimum_overall_accuracy must be 0.90")
-    if gate.get("perfect_states") != ["ERROR", "CONFIRM_REQUIRED", "RECORD_WRITE"]:
-        errors.append("recognition gate perfect_states mismatch")
+    human = spec.get("human_model", {})
+    if human.get("sequence") != EXPECTED_HUMAN_SEQUENCE:
+        errors.append("human_model sequence must be notice, investigate, lookup, learned_recognition")
+    if human.get("first_sight_exact_state_required") is not False:
+        errors.append("first-sight exact-state recognition must not be required")
+    if human.get("abstract_browser_recognition_gate_required") is not False:
+        errors.append("abstract browser recognition must not be a conformance gate")
+    if not human.get("indicator_role"):
+        errors.append("human_model must define the indicator role")
+    if not human.get("documentation_role"):
+        errors.append("human_model must define the documentation role")
+    if not human.get("learning_goal"):
+        errors.append("human_model must define the learning goal")
+
+    if "recognition_gate" in spec:
+        errors.append("recognition_gate is superseded; abstract quiz gates are not normative in v3")
+
+    documentation = spec.get("documentation", {})
+    if documentation.get("required") is not True:
+        errors.append("product indicator documentation must be required")
+    if set(documentation.get("must_define", [])) != REQUIRED_DOCUMENTATION:
+        errors.append("documentation must define colour, motion, critical meanings, and local labels/symbols")
+    if not documentation.get("lookup_target"):
+        errors.append("documentation must define an unfamiliar-indicator lookup target")
+
+    evidence = spec.get("implementation_evidence", {})
+    if evidence.get("abstract_browser_quiz") != "not a conformance gate":
+        errors.append("implementation evidence must mark abstract browser quizzes as non-conformance research")
+    questions = evidence.get("real_use_questions", [])
+    if len(questions) != 4 or not all(isinstance(question, str) and question.strip() for question in questions):
+        errors.append("implementation evidence must define four real-use questions")
 
     return errors
 
