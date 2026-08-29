@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {colourCss, patternLevelAt, resolveState, statePresentation} from "../examples/sls-1-reference/sls.mjs";
-import {buildRecognitionTrials, scoreRecognition} from "../examples/sls-1-reference/recognition.mjs";
 
 const spec = JSON.parse(fs.readFileSync(new URL("../standards/data/sls-1-v3.0-kiss.json", import.meta.url), "utf8"));
 
@@ -32,33 +31,11 @@ for (const state of spec.critical_global_states) {
   assert.ok(reduced.fallback.text.length > 0);
 }
 
-const trials = buildRecognitionTrials(spec, 12345);
-assert.equal(trials.length, 21);
-for (const state of spec.recognition_gate.states) {
-  const stateTrials = trials.filter((row) => row.state === state);
-  assert.equal(stateTrials.length, 3);
-  for (const row of stateTrials) {
-    assert.deepEqual(row.slot, spec.recognition_gate.slots[state]);
-  }
-}
-assert.equal(spec.recognition_gate.slots.CONFIRM_REQUIRED.label, "CONFIRM");
-assert.equal(spec.recognition_gate.slots.RECORD_WRITE.label, "WRITE");
-assert.equal(spec.recognition_gate.presentation, "complete labelled panel");
+assert.deepEqual(spec.human_model.sequence, ["notice", "investigate", "lookup", "learned_recognition"]);
+assert.equal(spec.human_model.first_sight_exact_state_required, false);
+assert.equal(spec.human_model.abstract_browser_recognition_gate_required, false);
+assert.equal(spec.documentation.required, true);
+assert.equal(spec.implementation_evidence.abstract_browser_quiz, "not a conformance gate");
+assert.equal("recognition_gate" in spec, false);
 
-const perfect = trials.map((row, i) => ({
-  trial: i + 1,
-  state: row.state,
-  answer: row.state,
-  correct: true,
-  phase_ms: row.phase_ms,
-  slot: row.slot,
-}));
-assert.equal(scoreRecognition(perfect, spec).pass, true);
-
-const confused = perfect.map((row) => ({...row}));
-const errorIndex = confused.findIndex((row) => row.state === "ERROR");
-confused[errorIndex].answer = "ACTIVE";
-confused[errorIndex].correct = false;
-assert.equal(scoreRecognition(confused, spec).pass, false);
-
-console.log("PASS: SLS-1 v3 KISS contextual reference and recognition harness");
+console.log("PASS: SLS-1 v3 KISS reference and learnability contract");
