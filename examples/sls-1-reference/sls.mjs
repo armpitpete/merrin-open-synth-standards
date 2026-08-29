@@ -18,20 +18,31 @@ export function patternLevelAt(pattern, elapsedMs, spec) {
   return phase < motion.on_ms ? 1 : 0.08;
 }
 
+export function staticPatternLevel(pattern) {
+  if (pattern.brightness === "dim") return 0.25;
+  if (pattern.brightness === "mid") return 0.72;
+  return 1;
+}
+
 export function statePresentation(spec, state, reducedMotion = false) {
   const patternId = spec.state_defaults[state];
   if (!patternId) throw new Error(`No pattern for state ${state}`);
   const pattern = spec.patterns[patternId];
   if (!pattern) throw new Error(`Unknown pattern ${patternId}`);
+  const motion = spec.allowed_motion[pattern.motion];
+  if (!motion) throw new Error(`Unknown motion ${pattern.motion}`);
 
-  if (reducedMotion && spec.reduced_motion_fallbacks[state]) {
-    return {
-      state,
-      patternId,
-      pattern,
-      reducedMotion: true,
-      fallback: spec.reduced_motion_fallbacks[state],
-    };
+  if (reducedMotion) {
+    const fallback = spec.reduced_motion_fallbacks[state] ?? null;
+    if (fallback || motion.kind !== "steady") {
+      return {
+        state,
+        patternId,
+        pattern,
+        reducedMotion: true,
+        fallback,
+      };
+    }
   }
 
   return {state, patternId, pattern, reducedMotion: false, fallback: null};
