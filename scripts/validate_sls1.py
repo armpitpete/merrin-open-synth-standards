@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SPEC = ROOT / "standards" / "data" / "sls-1-v3.0-kiss.json"
 
-ALLOWED_COLOURS = {"white", "green", "blue", "amber", "red"}
+EXPECTED_ALLOWED_COLOURS = ["white", "green", "blue", "amber", "red"]
 ALLOWED_MOTION = {"steady", "slow_flash", "fast_flash"}
 EXPECTED_MOTION = {
     "steady": {"kind": "steady"},
@@ -34,12 +34,12 @@ EXPECTED_REAL_USE_QUESTIONS = [
     "Does the documentation resolve the exact meaning correctly?",
     "Does repeated use make the convention easier to recognise without adding a more complex code?",
 ]
-REQUIRED_DOCUMENTATION = {
+EXPECTED_DOCUMENTATION_DEFINITIONS = [
     "colour categories",
     "motion categories",
     "critical state meanings",
     "local labels or symbols",
-}
+]
 
 EXPECTED_TOP_LEVEL_KEYS = {
     "standard_id",
@@ -82,23 +82,23 @@ EXPECTED_MANDATORY_STATES = [
     "WARNING",
     "ERROR",
 ]
-EXPECTED_CRITICAL_STATES = {
+EXPECTED_CRITICAL_STATES = [
     "ERROR",
     "CONFIRM_REQUIRED",
     "ARMED",
     "RECORD_WRITE",
     "WARNING",
     "CLOCK_LOST",
-}
-EXPECTED_SECONDARY_CARRIER_REQUIRED = {
+]
+EXPECTED_SECONDARY_CARRIER_REQUIRED = [
     "ARMED",
     "CONFIRM_REQUIRED",
     "RECORD_WRITE",
     "WARNING",
     "ERROR",
     "CLOCK_LOST",
-}
-EXPECTED_SINGLE_GLOBAL = {"IDLE", "ACTIVE", "WARNING", "ERROR"}
+]
+EXPECTED_SINGLE_GLOBAL = ["IDLE", "ACTIVE", "WARNING", "ERROR"]
 EXPECTED_PRECEDENCE = [
     "ERROR",
     "CONFIRM_REQUIRED",
@@ -140,26 +140,28 @@ EXPECTED_STATE_DEFAULTS = {
     "SELECTED_FOCUSED": "K2",
     "LOCKED_HELD": "K4",
 }
-EXPECTED_FALLBACK_KEYS = {"text", "symbol", "animation"}
+EXPECTED_REDUCED_MOTION_FALLBACKS = {
+    "ARMED": {"text": "Armed", "symbol": "A", "animation": "none"},
+    "CONFIRM_REQUIRED": {"text": "Confirm", "symbol": "!", "animation": "none"},
+    "RECORD_WRITE": {"text": "Writing", "symbol": "W", "animation": "none"},
+    "WARNING": {"text": "Warning", "symbol": "△", "animation": "none"},
+    "ERROR": {"text": "Error", "symbol": "×", "animation": "none"},
+    "CLOCK_LOST": {"text": "Clock lost", "symbol": "C", "animation": "none"},
+}
 
 
 def _events_in_rolling_second(motion: dict) -> int:
     if motion.get("kind") == "steady":
         return 0
-    cycle = int(motion.get("cycle_ms", 0))
-    if cycle <= 0:
+    cycle = motion.get("cycle_ms")
+    if type(cycle) is not int or cycle <= 0:
         return 999
     return (1000 + cycle - 1) // cycle
 
 
-def _report_exact_set(errors: list[str], label: str, actual: object, expected: set[str]) -> None:
-    try:
-        actual_set = set(actual or [])
-    except TypeError:
-        errors.append(f"{label} must be a list containing exactly {sorted(expected)}")
-        return
-    if actual_set != expected:
-        errors.append(f"{label} must contain exactly {sorted(expected)}")
+def _require_exact_list(errors: list[str], label: str, actual: object, expected: list[str]) -> None:
+    if actual != expected:
+        errors.append(f"{label} must match the canonical ordered list exactly")
 
 
 def validate(spec: dict) -> list[str]:
@@ -177,8 +179,7 @@ def validate(spec: dict) -> list[str]:
     if spec.get("design_rule") != EXPECTED_DESIGN_RULE:
         errors.append("design_rule must match the canonical SLS-1 v3 KISS rule exactly")
 
-    if set(spec.get("allowed_colours", [])) != ALLOWED_COLOURS:
-        errors.append("allowed_colours must be exactly white, green, blue, amber, red")
+    _require_exact_list(errors, "allowed_colours", spec.get("allowed_colours"), EXPECTED_ALLOWED_COLOURS)
 
     motions = spec.get("allowed_motion", {})
     if set(motions) != ALLOWED_MOTION:
@@ -187,12 +188,12 @@ def validate(spec: dict) -> list[str]:
         if motions.get(name) != expected:
             errors.append(f"{name}: motion timing must match canonical KISS timing")
 
-    ceiling = int(spec.get("max_visible_on_events_per_rolling_second", 0))
-    if ceiling != 2:
-        errors.append("max_visible_on_events_per_rolling_second must be 2")
+    ceiling = spec.get("max_visible_on_events_per_rolling_second")
+    if type(ceiling) is not int or ceiling != 2:
+        errors.append("max_visible_on_events_per_rolling_second must be the integer 2")
     for name, motion in motions.items():
-        if isinstance(motion, dict) and _events_in_rolling_second(motion) > ceiling:
-            errors.append(f"{name}: exceeds {ceiling} visible on-events in a rolling second")
+        if isinstance(motion, dict) and _events_in_rolling_second(motion) > 2:
+            errors.append(f"{name}: exceeds 2 visible on-events in a rolling second")
 
     if spec.get("mandatory_states") != EXPECTED_MANDATORY_STATES:
         errors.append("mandatory_states must match the canonical SLS-1 v3 state list exactly")
@@ -220,34 +221,28 @@ def validate(spec: dict) -> list[str]:
         if any(token in normalized for token in forbidden_tokens):
             errors.append(f"{pattern_id}: Morse-like/counting pattern names are forbidden in v3")
 
-    _report_exact_set(errors, "critical_global_states", spec.get("critical_global_states"), EXPECTED_CRITICAL_STATES)
-    _report_exact_set(
+    _require_exact_list(
+        errors,
+        "critical_global_states",
+        spec.get("critical_global_states"),
+        EXPECTED_CRITICAL_STATES,
+    )
+    _require_exact_list(
         errors,
         "secondary_carrier_required",
         spec.get("secondary_carrier_required"),
         EXPECTED_SECONDARY_CARRIER_REQUIRED,
     )
-
-    single_global = set(spec.get("single_unlabelled_global_indicator_states", []))
-    if single_global != EXPECTED_SINGLE_GLOBAL:
-        errors.append("single unlabelled global indicator must be limited to IDLE, ACTIVE, WARNING, ERROR")
+    _require_exact_list(
+        errors,
+        "single_unlabelled_global_indicator_states",
+        spec.get("single_unlabelled_global_indicator_states"),
+        EXPECTED_SINGLE_GLOBAL,
+    )
 
     fallbacks = spec.get("reduced_motion_fallbacks", {})
-    if set(fallbacks) != EXPECTED_CRITICAL_STATES:
-        errors.append("reduced_motion_fallbacks must cover exactly the canonical critical states")
-    for state in EXPECTED_CRITICAL_STATES:
-        fallback = fallbacks.get(state)
-        if not isinstance(fallback, dict):
-            errors.append(f"critical global state {state} lacks reduced-motion fallback")
-            continue
-        if set(fallback) != EXPECTED_FALLBACK_KEYS:
-            errors.append(f"{state}: reduced-motion fallback keys must be exactly text, symbol, animation")
-        if fallback.get("animation") != "none":
-            errors.append(f"{state}: reduced-motion fallback must set animation=none")
-        if not fallback.get("text"):
-            errors.append(f"{state}: reduced-motion fallback needs text")
-        if not fallback.get("symbol"):
-            errors.append(f"{state}: reduced-motion fallback needs symbol")
+    if fallbacks != EXPECTED_REDUCED_MOTION_FALLBACKS:
+        errors.append("reduced_motion_fallbacks must match the canonical state/text/symbol/animation mapping exactly")
 
     if spec.get("precedence") != EXPECTED_PRECEDENCE:
         errors.append("precedence must match the canonical SLS-1 v3 precedence exactly")
@@ -276,8 +271,12 @@ def validate(spec: dict) -> list[str]:
         errors.append("documentation keys must match the canonical v3 documentation contract exactly")
     if documentation.get("required") is not True:
         errors.append("product indicator documentation must be required")
-    if set(documentation.get("must_define", [])) != REQUIRED_DOCUMENTATION:
-        errors.append("documentation must define colour, motion, critical meanings, and local labels/symbols")
+    _require_exact_list(
+        errors,
+        "documentation.must_define",
+        documentation.get("must_define"),
+        EXPECTED_DOCUMENTATION_DEFINITIONS,
+    )
     if documentation.get("lookup_target") != EXPECTED_LOOKUP_TARGET:
         errors.append("documentation lookup_target must match the canonical v3 lookup requirement exactly")
 
