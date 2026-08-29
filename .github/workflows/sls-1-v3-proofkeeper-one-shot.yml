@@ -81,7 +81,6 @@ jobs:
           effort: high
           output-schema: |
             {
-              "$schema": "https://json-schema.org/draft/2020-12/schema",
               "type": "object",
               "additionalProperties": false,
               "required": ["schema_version","record_type","target_repository","target_sha","control_sha","verdict","criteria","limitations","authority_granted","automatic_actions"],
@@ -89,13 +88,11 @@ jobs:
                 "schema_version": {"type": "string"},
                 "record_type": {"type": "string"},
                 "target_repository": {"type": "string"},
-                "target_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-                "control_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+                "target_sha": {"type": "string"},
+                "control_sha": {"type": "string"},
                 "verdict": {"type": "string", "enum": ["ACCEPT","REJECT","INSUFFICIENT"]},
                 "criteria": {
                   "type": "array",
-                  "minItems": 10,
-                  "maxItems": 10,
                   "items": {
                     "type": "object",
                     "additionalProperties": false,
@@ -103,27 +100,21 @@ jobs:
                     "properties": {
                       "criterion_id": {"type": "string"},
                       "disposition": {"type": "string", "enum": ["PASS","FAIL","INSUFFICIENT"]},
-                      "finding": {"type": "string", "minLength": 1, "maxLength": 6000},
+                      "finding": {"type": "string"},
                       "evidence_refs": {
                         "type": "array",
-                        "minItems": 1,
-                        "maxItems": 30,
-                        "uniqueItems": true,
-                        "items": {"type": "string", "minLength": 1, "maxLength": 700}
+                        "items": {"type": "string"}
                       }
                     }
                   }
                 },
                 "limitations": {
                   "type": "array",
-                  "maxItems": 50,
-                  "uniqueItems": true,
-                  "items": {"type": "string", "minLength": 1, "maxLength": 6000}
+                  "items": {"type": "string"}
                 },
                 "authority_granted": {"type": "boolean"},
                 "automatic_actions": {
                   "type": "array",
-                  "maxItems": 0,
                   "items": {"type": "string"}
                 }
               }
@@ -154,8 +145,10 @@ jobs:
             - Stay inside repository-provable boundaries. Do not claim physical
               LED, ambient-light, universal accessibility, retention, or player
               acceptance evidence that the checkout does not contain.
-            - Evidence references must be repository-relative paths, optionally
-              with a fragment, or exactly .proofkeeper-runtime/workflow-runs.json.
+            - Give every criterion a non-empty finding and at least one evidence
+              reference. Evidence references must be repository-relative paths,
+              optionally with a fragment, or exactly
+              .proofkeeper-runtime/workflow-runs.json.
             - Work read-only. Do not edit, commit, approve, merge, publish,
               deploy, access unrelated secrets, or grant authority.
             - schema_version must be "0.1".
@@ -213,7 +206,8 @@ jobs:
               raise SystemExit('empty Proofkeeper result')
           candidate = json.loads(raw)
           expected_ids = [f'V3-{i:02d}' for i in range(1, 11)]
-          actual_ids = [item.get('criterion_id') for item in candidate.get('criteria', [])]
+          criteria = candidate.get('criteria', [])
+          actual_ids = [item.get('criterion_id') for item in criteria]
           checks = {
               'schema_version': '0.1',
               'record_type': 'proofkeeper-semantic-candidate',
@@ -226,7 +220,15 @@ jobs:
                   raise SystemExit(f'wrong {key}')
           if actual_ids != expected_ids:
               raise SystemExit(f'criterion order mismatch: {actual_ids!r}')
-          dispositions = [item.get('disposition') for item in candidate['criteria']]
+          for item in criteria:
+              if not isinstance(item.get('finding'), str) or not item['finding'].strip():
+                  raise SystemExit(f"empty finding for {item.get('criterion_id')}")
+              refs = item.get('evidence_refs')
+              if not isinstance(refs, list) or not refs or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
+                  raise SystemExit(f"invalid evidence refs for {item.get('criterion_id')}")
+              if len(refs) != len(set(refs)):
+                  raise SystemExit(f"duplicate evidence refs for {item.get('criterion_id')}")
+          dispositions = [item.get('disposition') for item in criteria]
           expected_verdict = 'REJECT' if 'FAIL' in dispositions else ('INSUFFICIENT' if 'INSUFFICIENT' in dispositions else 'ACCEPT')
           if candidate.get('verdict') != expected_verdict:
               raise SystemExit('verdict does not follow frozen aggregation rule')
@@ -253,7 +255,7 @@ jobs:
           }
           (out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
           print('PROOFKEEPER_VERDICT=' + candidate['verdict'])
-          for item in candidate['criteria']:
+          for item in criteria:
               print(f"{item['criterion_id']}={item['disposition']}")
           PY
 
