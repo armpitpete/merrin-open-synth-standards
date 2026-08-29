@@ -35,8 +35,15 @@ for (const state of spec.critical_global_states) {
 const trials = buildRecognitionTrials(spec, 12345);
 assert.equal(trials.length, 21);
 for (const state of spec.recognition_gate.states) {
-  assert.equal(trials.filter((row) => row.state === state).length, 3);
+  const stateTrials = trials.filter((row) => row.state === state);
+  assert.equal(stateTrials.length, 3);
+  for (const row of stateTrials) {
+    assert.deepEqual(row.slot, spec.recognition_gate.slots[state]);
+  }
 }
+assert.equal(spec.recognition_gate.slots.CONFIRM_REQUIRED.label, "CONFIRM");
+assert.equal(spec.recognition_gate.slots.RECORD_WRITE.label, "WRITE");
+assert.equal(spec.recognition_gate.presentation, "complete labelled panel");
 
 const perfect = trials.map((row, i) => ({
   trial: i + 1,
@@ -44,6 +51,7 @@ const perfect = trials.map((row, i) => ({
   answer: row.state,
   correct: true,
   phase_ms: row.phase_ms,
+  slot: row.slot,
 }));
 assert.equal(scoreRecognition(perfect, spec).pass, true);
 
@@ -53,4 +61,4 @@ confused[errorIndex].answer = "ACTIVE";
 confused[errorIndex].correct = false;
 assert.equal(scoreRecognition(confused, spec).pass, false);
 
-console.log("PASS: SLS-1 v3 KISS reference and recognition harness");
+console.log("PASS: SLS-1 v3 KISS contextual reference and recognition harness");
