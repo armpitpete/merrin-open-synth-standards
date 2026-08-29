@@ -53,10 +53,20 @@
     "CLOCK_LOST": {"text": "Clock lost", "symbol": "C", "animation": "none"}
   },
   "recognition_gate": {
-    "name": "KISS unfamiliar-person recognition",
-    "tester_requirement": "tester must not have previously studied or used SLS-1 v3",
+    "name": "KISS contextual unfamiliar-person recognition",
+    "tester_requirement": "tester must not have previously studied or used SLS-1 v3 or completed an earlier SLS-1 v3 recognition run",
     "legend_max_seconds": 20,
     "observation_ms": 1000,
+    "presentation": "complete labelled panel",
+    "slots": {
+      "IDLE": {"position": "SYSTEM", "label": "STATUS"},
+      "ACTIVE": {"position": "SYSTEM", "label": "STATUS"},
+      "ARMED": {"position": "ACTION", "label": "ARM"},
+      "CONFIRM_REQUIRED": {"position": "ACTION", "label": "CONFIRM"},
+      "RECORD_WRITE": {"position": "ACTION", "label": "WRITE"},
+      "WARNING": {"position": "SYSTEM", "label": "WARNING"},
+      "ERROR": {"position": "SYSTEM", "label": "ERROR"}
+    },
     "states": ["IDLE", "ACTIVE", "ARMED", "CONFIRM_REQUIRED", "RECORD_WRITE", "WARNING", "ERROR"],
     "repetitions_per_state": 3,
     "minimum_overall_accuracy": 0.9,
