@@ -21,7 +21,7 @@ They are not presented as universal law. They are working standards for builders
 | [Desktop controller example](examples/desktop-controller-example.md) | Shows hands-first layout, rear patching, and state-light placement. |
 | [Browser synth example](examples/browser-synth-example.md) | Shows how the standards apply to Web Audio and HTML/CSS interfaces. |
 | [SLS-1 v3 reference surface](examples/sls-1-reference/) | Executable colour + steady/slow/fast reference renderer. |
-| [SLS-1 v3 unfamiliar-person gate](examples/sls-1-reference/recognition.html) | 21-trial KISS human-recognition harness. |
+| [SLS-1 v3 contextual unfamiliar-person gate](examples/sls-1-reference/recognition.html) | 21-trial complete-panel human-recognition harness. |
 
 ## Repository files
 
@@ -67,6 +67,8 @@ standards/data/sls-1-v3.0-kiss.json
 ```
 
 A single unlabelled global light is deliberately limited to broad IDLE / ACTIVE / WARNING / ERROR communication. Exact critical action states require a second carrier such as a fixed label, position, text, symbol, or dedicated indicator.
+
+The first blind single-light v3 human run failed at 17/21. The corrective gate now tests the complete labelled panel rather than adding more blink codes.
 
 ## MERRIN-STD-HIL-1 — Human Interface Layout
 
