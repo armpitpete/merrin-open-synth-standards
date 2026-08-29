@@ -6,6 +6,8 @@ The v2 72-trial Morse-like recognition gate is superseded before Proofkeeper rev
 
 Reason: the design required users to distinguish counted and ordered pulse signatures. The v3 candidate applies KISS instead of spending evidence effort proving that complexity can be learned.
 
+The later v3 browser quizzes are also now **research evidence, not conformance gates**.
+
 ## v3 design change
 
 - Colour carries category.
@@ -15,7 +17,22 @@ Reason: the design required users to distinguish counted and ordered pulse signa
 - A single unlabelled global indicator is deliberately limited to IDLE / ACTIVE / WARNING / ERROR.
 - Exact critical states require a second carrier such as label, position, text, symbol, or dedicated indicator.
 
-## First v3 human gate — FAIL
+## Human-use model
+
+The accepted model is:
+
+```text
+notice an indicator
+→ investigate
+→ read the product key/manual
+→ remember the convention next time
+```
+
+An unfamiliar user is not expected to infer an exact semantic state name from a light on first sight.
+
+The indicator should be noticeable and simple. Documentation supplies the exact first-encounter meaning. Consistent reuse produces familiarity.
+
+## Research run 1 — blind single light — FAIL
 
 Exact candidate: `38f1cf529e35a9eac38181e5f22000572b44dc0a`
 
@@ -31,39 +48,45 @@ First completed unfamiliar-person run:
 - ERROR 3/3;
 - one prohibited RECORD / WRITE ↔ ERROR confusion.
 
-Verdict: **FAIL**.
+Verdict under that research protocol: **FAIL**.
 
-Interpretation: broad status categories were recognised, but the blind anonymous-light presentation did not reliably communicate exact action states.
+Finding: broad categories worked, but stripping away contextual carriers made exact action-state naming unreliable.
 
-This does not justify adding more pulse words. The blind harness had removed the contextual carrier that v3 itself requires for exact critical meanings.
+## Research run 2 — labelled panel hidden after one second — FAIL
 
-The raw first-run JSON is preserved in the PR #9 discussion and remains immutable evidence for `38f1cf52…`.
+Exact candidate: `e3347fa4182ab168f53e858be75fb81bb33cce45`
 
-## Corrective human gate
+First completed run by a different unfamiliar tester:
 
-The correction tests the complete intended presentation:
+- 14/21 correct — 66.7%;
+- IDLE 2/3;
+- ACTIVE 2/3;
+- ARMED 2/3;
+- CONFIRM REQUIRED 3/3;
+- RECORD / WRITE 2/3;
+- WARNING 1/3;
+- ERROR 2/3;
+- zero prohibited ERROR ↔ ACTIVE confusions;
+- zero prohibited RECORD / WRITE ↔ ERROR confusions.
 
-```text
-SYSTEM: STATUS | WARNING | ERROR
-ACTION: ARM | CONFIRM | WRITE
-```
+The submitted seed `1594027353` reproduced the trial order, phases, slot assignments, state counts, and score. The evidence is structurally valid.
 
-The labelled position is part of the signal.
+Verdict under that research protocol: **FAIL**.
 
-The corrective gate keeps:
+Finding: adding labels fixed CONFIRM REQUIRED to 3/3, but hiding the entire six-position panel after one second turned the task into visual search plus short-term recall. The protocol was no longer a faithful model of persistent status indicators.
 
-- seven core states;
-- three repetitions each: 21 trials;
-- at most 20 seconds of legend exposure;
-- exactly one second of observation;
-- the same >=90% overall threshold;
-- perfect ERROR / CONFIRM REQUIRED / RECORD WRITE requirements;
-- the same prohibited-confusion checks.
+## Resulting correction
 
-A new exact candidate requires a **different unfamiliar tester**. The earlier tester is no longer eligible because they have completed a v3 recognition run.
+Do **not** add more pulse vocabulary and do **not** keep rerunning abstract unfamiliar-person naming quizzes.
+
+The normative v3 human model is now notice → investigate → lookup → learned recognition.
+
+Abstract browser quizzes are not conformance gates. Future human evidence should come from realistic implementations and ask whether important states are noticed, whether users can find and understand the explanation, and whether the convention becomes easier to recognise through ordinary use.
 
 ## Evidence boundary
 
-Repository tests can verify the KISS vocabulary, fixed context map, and harness mechanics. They cannot supply the unfamiliar human-recognition evidence.
+Repository tests can verify the bounded colour/motion vocabulary, critical-state context requirements, documentation requirement, and human-use model.
 
-Proofkeeper remains blocked until the corrected human gate passes.
+They cannot prove real-world noticeability, physical LED brightness, ambient-light performance, accessibility for every user, learning retention, or player acceptance.
+
+Independent review may assess this specification inside those stated boundaries. Physical and longitudinal human evidence belongs to implementation maturity, not to an abstract pre-review quiz.
