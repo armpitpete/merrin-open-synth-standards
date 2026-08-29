@@ -25,7 +25,7 @@ jobs:
       final_message: ${{ steps.codex.outputs.final-message }}
     steps:
       - name: Check out frozen review package
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.sha }}
           path: review-package
@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Check out exact candidate
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ env.TARGET_SHA }}
           path: target
@@ -79,10 +79,9 @@ jobs:
           Path('target/.proofkeeper-runtime/review-context.json').write_text(json.dumps(context, indent=2, sort_keys=True) + '\n')
           PY
 
-      # Security boundary: the model is the final step in this job.
       - name: Run independent Proofkeeper semantic falsifier
         id: codex
-        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # current v1 as of 2026-08-29
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           working-directory: ${{ github.workspace }}/target
@@ -97,12 +96,12 @@ jobs:
               "additionalProperties": false,
               "required": ["schema_version","record_type","target_repository","target_sha","criteria_path","verdict","criteria","limitations","authority_granted","automatic_actions"],
               "properties": {
-                "schema_version": {"const": "0.1"},
-                "record_type": {"const": "proofkeeper-semantic-candidate"},
-                "target_repository": {"const": "armpitpete/merrin-open-synth-standards"},
-                "target_sha": {"const": "6b880a0e1a8c022b033ee247b2badc0d42232ba0"},
-                "criteria_path": {"const": "reviews/SLS-1_V3_PROOFKEEPER_CRITERIA.md"},
-                "verdict": {"enum": ["ACCEPT","REJECT","INSUFFICIENT"]},
+                "schema_version": {"type": "string", "const": "0.1"},
+                "record_type": {"type": "string", "const": "proofkeeper-semantic-candidate"},
+                "target_repository": {"type": "string", "const": "armpitpete/merrin-open-synth-standards"},
+                "target_sha": {"type": "string", "const": "6b880a0e1a8c022b033ee247b2badc0d42232ba0"},
+                "criteria_path": {"type": "string", "const": "reviews/SLS-1_V3_PROOFKEEPER_CRITERIA.md"},
+                "verdict": {"type": "string", "enum": ["ACCEPT","REJECT","INSUFFICIENT"]},
                 "criteria": {
                   "type": "array",
                   "minItems": 9,
@@ -113,15 +112,15 @@ jobs:
                     "required": ["criterion_id","disposition","finding","evidence_refs"],
                     "properties": {
                       "criterion_id": {"type": "string"},
-                      "disposition": {"enum": ["PASS","FAIL","INSUFFICIENT"]},
+                      "disposition": {"type": "string", "enum": ["PASS","FAIL","INSUFFICIENT"]},
                       "finding": {"type": "string","minLength": 1,"maxLength": 6000},
                       "evidence_refs": {"type": "array","minItems": 1,"maxItems": 30,"uniqueItems": true,"items": {"type": "string","minLength": 1,"maxLength": 700}}
                     }
                   }
                 },
                 "limitations": {"type": "array","maxItems": 50,"uniqueItems": true,"items": {"type": "string","minLength": 1,"maxLength": 6000}},
-                "authority_granted": {"const": false},
-                "automatic_actions": {"type": "array","maxItems": 0}
+                "authority_granted": {"type": "boolean", "const": false},
+                "automatic_actions": {"type": "array","maxItems": 0,"items": {"type": "string"}}
               }
             }
           prompt: |
@@ -154,7 +153,7 @@ jobs:
       actions: read
     steps:
       - name: Check out frozen review package
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.sha }}
           path: review-package
@@ -223,8 +222,7 @@ jobs:
             -o "$OUT/workflow-runs.json"
 
       - name: Publish immutable Proofkeeper artifact
-        id: upload
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sls1-v3-proofkeeper-6b880a0e-${{ github.run_id }}
           path: ${{ runner.temp }}/sls1-v3-proofkeeper/
