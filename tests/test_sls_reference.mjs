@@ -1,8 +1,30 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import {colourCss, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "../examples/sls-1-reference/sls.mjs";
+import {colourCss, parseJsonStrict, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "../examples/sls-1-reference/sls.mjs";
 
-const spec = JSON.parse(fs.readFileSync(new URL("../standards/data/sls-1-v3.0-kiss.json", import.meta.url), "utf8"));
+const specText = fs.readFileSync(new URL("../standards/data/sls-1-v3.0-kiss.json", import.meta.url), "utf8");
+const spec = parseJsonStrict(specText);
+
+assert.throws(
+  () => parseJsonStrict('{"allowed_motion":{"steady":{"kind":"steady"}},"allowed_motion":{"steady":{"kind":"flash","cycle_ms":100,"on_ms":50}}}'),
+  /Duplicate JSON object member: allowed_motion/,
+);
+assert.throws(
+  () => parseJsonStrict('{"allowed_motion":{"fast_flash":{"kind":"flash","cycle_ms":500,"cycle_ms":100,"on_ms":250}}}'),
+  /Duplicate JSON object member: cycle_ms/,
+);
+assert.throws(
+  () => parseJsonStrict('{"reduced_motion_fallbacks":{"ERROR":{"text":"Error","text":"All clear","symbol":"×","animation":"none"}}}'),
+  /Duplicate JSON object member: text/,
+);
+assert.throws(
+  () => parseJsonStrict('{"documentation":{"required":true,"required":false}}'),
+  /Duplicate JSON object member: required/,
+);
+assert.throws(
+  () => parseJsonStrict('{"allowed_motion":{},"allowed_\\u006dotion":{}}'),
+  /Duplicate JSON object member: allowed_motion/,
+);
 
 assert.equal(resolveState(["ACTIVE", "WARNING"], spec.precedence), "WARNING");
 assert.equal(resolveState(["ARMED", "CONFIRM_REQUIRED"], spec.precedence), "CONFIRM_REQUIRED");
@@ -49,4 +71,4 @@ assert.equal(spec.documentation.required, true);
 assert.equal(spec.implementation_evidence.abstract_browser_quiz, "not a conformance gate");
 assert.equal("recognition_gate" in spec, false);
 
-console.log("PASS: SLS-1 v3 KISS reference and learnability contract");
+console.log("PASS: SLS-1 v3 KISS reference, strict JSON loading, and learnability contract");
