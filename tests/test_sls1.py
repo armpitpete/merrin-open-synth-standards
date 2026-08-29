@@ -51,6 +51,24 @@ class SLS1ValidatorTests(unittest.TestCase):
             "motion timing must match canonical KISS timing",
         )
 
+    def test_rejects_float_event_ceiling(self) -> None:
+        self.assert_invalid(
+            lambda data: data.update(max_visible_on_events_per_rolling_second=2.9),
+            "must be the integer 2",
+        )
+
+    def test_rejects_string_event_ceiling(self) -> None:
+        self.assert_invalid(
+            lambda data: data.update(max_visible_on_events_per_rolling_second="2"),
+            "must be the integer 2",
+        )
+
+    def test_rejects_duplicate_allowed_colour(self) -> None:
+        self.assert_invalid(
+            lambda data: data["allowed_colours"].append("red"),
+            "allowed_colours must match the canonical ordered list exactly",
+        )
+
     def test_rejects_morse_like_pattern(self) -> None:
         self.assert_invalid(
             lambda data: data["patterns"]["K4"].update(name="DOUBLE_EQUAL"),
@@ -87,19 +105,37 @@ class SLS1ValidatorTests(unittest.TestCase):
     def test_rejects_modified_critical_state_set(self) -> None:
         self.assert_invalid(
             lambda data: data["critical_global_states"].remove("ERROR"),
-            "critical_global_states must contain exactly",
+            "critical_global_states must match the canonical ordered list exactly",
+        )
+
+    def test_rejects_duplicate_critical_state(self) -> None:
+        self.assert_invalid(
+            lambda data: data["critical_global_states"].append("ERROR"),
+            "critical_global_states must match the canonical ordered list exactly",
         )
 
     def test_rejects_missing_secondary_carrier_for_error(self) -> None:
         self.assert_invalid(
             lambda data: data["secondary_carrier_required"].remove("ERROR"),
-            "secondary_carrier_required must contain exactly",
+            "secondary_carrier_required must match the canonical ordered list exactly",
+        )
+
+    def test_rejects_duplicate_secondary_carrier(self) -> None:
+        self.assert_invalid(
+            lambda data: data["secondary_carrier_required"].append("ERROR"),
+            "secondary_carrier_required must match the canonical ordered list exactly",
         )
 
     def test_rejects_overloaded_single_global_indicator(self) -> None:
         self.assert_invalid(
             lambda data: data["single_unlabelled_global_indicator_states"].append("ARMED"),
-            "single unlabelled global indicator must be limited",
+            "single_unlabelled_global_indicator_states must match the canonical ordered list exactly",
+        )
+
+    def test_rejects_duplicate_single_global_indicator_state(self) -> None:
+        self.assert_invalid(
+            lambda data: data["single_unlabelled_global_indicator_states"].append("ERROR"),
+            "single_unlabelled_global_indicator_states must match the canonical ordered list exactly",
         )
 
     def test_rejects_precedence_remap(self) -> None:
@@ -138,12 +174,36 @@ class SLS1ValidatorTests(unittest.TestCase):
             "documentation lookup_target must match the canonical v3 lookup requirement exactly",
         )
 
+    def test_rejects_duplicate_documentation_definition(self) -> None:
+        self.assert_invalid(
+            lambda data: data["documentation"]["must_define"].append("critical state meanings"),
+            "documentation.must_define must match the canonical ordered list exactly",
+        )
+
     def test_rejects_rewritten_real_use_questions(self) -> None:
         self.assert_invalid(
             lambda data: data["implementation_evidence"]["real_use_questions"].__setitem__(
                 0, "Can a stranger name the exact state after one second?"
             ),
             "implementation evidence real_use_questions must match the canonical v3 questions exactly",
+        )
+
+    def test_rejects_swapped_reduced_motion_symbols(self) -> None:
+        def swap_symbols(data: dict) -> None:
+            armed = data["reduced_motion_fallbacks"]["ARMED"]["symbol"]
+            error = data["reduced_motion_fallbacks"]["ERROR"]["symbol"]
+            data["reduced_motion_fallbacks"]["ARMED"]["symbol"] = error
+            data["reduced_motion_fallbacks"]["ERROR"]["symbol"] = armed
+
+        self.assert_invalid(
+            swap_symbols,
+            "reduced_motion_fallbacks must match the canonical state/text/symbol/animation mapping exactly",
+        )
+
+    def test_rejects_contradictory_reduced_motion_text(self) -> None:
+        self.assert_invalid(
+            lambda data: data["reduced_motion_fallbacks"]["ERROR"].update(text="All clear"),
+            "reduced_motion_fallbacks must match the canonical state/text/symbol/animation mapping exactly",
         )
 
     def test_rejects_first_sight_exact_state_requirement(self) -> None:
@@ -167,7 +227,7 @@ class SLS1ValidatorTests(unittest.TestCase):
     def test_rejects_missing_documentation_key(self) -> None:
         self.assert_invalid(
             lambda data: data["documentation"]["must_define"].remove("critical state meanings"),
-            "documentation must define colour, motion, critical meanings, and local labels/symbols",
+            "documentation.must_define must match the canonical ordered list exactly",
         )
 
     def test_rejects_wrong_human_sequence(self) -> None:
