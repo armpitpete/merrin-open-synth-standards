@@ -20,8 +20,25 @@ The reason was architectural rather than evidential: v2 required a user to disti
 - A single unlabelled global indicator is limited to IDLE / ACTIVE / WARNING / ERROR.
 - Critical exact meanings require a non-colour secondary carrier.
 - Counted pulse groups, short–long/long–short signatures, breathing codes, random flicker, and decorative state animation are forbidden.
-- The human gate is reduced from 72 trials to 21: seven core states × three repetitions.
-- The new gate requires an unfamiliar tester and at most 20 seconds of legend exposure.
+- The human gate is 21 trials: seven core states × three repetitions.
+- The gate requires an unfamiliar tester and at most 20 seconds of legend exposure.
+
+### First human result
+
+Exact candidate `38f1cf529e35a9eac38181e5f22000572b44dc0a` scored 17/21 (81.0%) and **failed**.
+
+The failure was concentrated in CONFIRM REQUIRED and RECORD / WRITE. The blind test had removed the contextual carrier that v3 requires for exact critical states.
+
+### Corrective gate
+
+The test now uses the complete labelled panel:
+
+```text
+SYSTEM: STATUS | WARNING | ERROR
+ACTION: ARM | CONFIRM | WRITE
+```
+
+No new blink patterns were added. The pass thresholds remain unchanged. A new exact candidate requires a different unfamiliar tester.
 
 ### Evidence boundary
 
@@ -29,7 +46,7 @@ Mechanical validation can prove contract consistency and harness behaviour.
 
 It cannot supply the unfamiliar-person recognition result, physical LED evidence, ambient-light evidence, or player acceptance.
 
-Proofkeeper review remains blocked until the unfamiliar-person recognition gate passes.
+Proofkeeper review remains blocked until the corrected unfamiliar-person recognition gate passes.
 
 ## 2026-08-27 — SLS-1 v2.0-draft completion candidate
 
