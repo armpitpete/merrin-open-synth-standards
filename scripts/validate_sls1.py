@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the machine-readable SLS-1 v2 pattern contract."""
+"""Validate the machine-readable SLS-1 v3 KISS contract."""
 
 from __future__ import annotations
 
@@ -8,54 +8,24 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SPEC = ROOT / "standards" / "data" / "sls-1-v2.0-patterns.json"
+DEFAULT_SPEC = ROOT / "standards" / "data" / "sls-1-v3.0-kiss.json"
+
+ALLOWED_COLOURS = {"white", "green", "blue", "amber", "red"}
+ALLOWED_MOTION = {"steady", "slow_flash", "fast_flash"}
+EXPECTED_MOTION = {
+    "steady": {"kind": "steady"},
+    "slow_flash": {"kind": "flash", "cycle_ms": 1000, "on_ms": 500},
+    "fast_flash": {"kind": "flash", "cycle_ms": 500, "on_ms": 250},
+}
 
 
-def _segments(pattern: dict) -> list[tuple[int, int]]:
-    return [(int(item["level"]), int(item["duration_ms"])) for item in pattern.get("segments", [])]
-
-
-def _canonical_cycle_signature(pattern: dict) -> tuple:
-    if pattern.get("kind") != "pulse":
-        return (pattern.get("kind"), pattern.get("brightness"), pattern.get("cycle_ms"))
-    segments = _segments(pattern)
-    rotations = []
-    for i in range(len(segments)):
-        rotated = tuple(segments[i:] + segments[:i])
-        rotations.append(rotated)
-    return ("pulse", min(rotations))
-
-
-def _pulse_starts(pattern: dict) -> list[int]:
-    if pattern.get("kind") != "pulse":
-        return []
-    starts = []
-    elapsed = 0
-    previous = 0
-    for level, duration in _segments(pattern):
-        if level == 1 and previous == 0:
-            starts.append(elapsed)
-        previous = level
-        elapsed += duration
-    return starts
-
-
-def _max_pulses_in_rolling_window(pattern: dict, window_ms: int) -> int:
-    if pattern.get("kind") != "pulse":
+def _events_in_rolling_second(motion: dict) -> int:
+    if motion.get("kind") == "steady":
         return 0
-    cycle = int(pattern["cycle_ms"])
-    starts = _pulse_starts(pattern)
-    if not starts:
-        return 0
-    repeated = []
-    repeats = (window_ms // cycle) + 3
-    for k in range(-1, repeats + 1):
-        repeated.extend(start + k * cycle for start in starts)
-    maximum = 0
-    for phase in range(cycle):
-        count = sum(phase <= t < phase + window_ms for t in repeated)
-        maximum = max(maximum, count)
-    return maximum
+    cycle = int(motion.get("cycle_ms", 0))
+    if cycle <= 0:
+        return 999
+    return (1000 + cycle - 1) // cycle
 
 
 def validate(spec: dict) -> list[str]:
@@ -63,71 +33,59 @@ def validate(spec: dict) -> list[str]:
 
     if spec.get("standard_id") != "MERRIN-STD-SLS-1":
         errors.append("standard_id must be MERRIN-STD-SLS-1")
-    if spec.get("version") != "v2.0-draft":
-        errors.append("version must be v2.0-draft")
+    if spec.get("version") != "v3.0-draft":
+        errors.append("version must be v3.0-draft")
 
-    window = int(spec.get("signature_window_ms", 0))
-    ceiling = int(spec.get("max_visible_pulses_per_rolling_second", 0))
-    if window != 1000:
-        errors.append("signature_window_ms must be 1000")
-    if ceiling <= 0 or ceiling > 3:
-        errors.append("pulse ceiling must be between 1 and 3 inclusive")
+    if set(spec.get("allowed_colours", [])) != ALLOWED_COLOURS:
+        errors.append("allowed_colours must be exactly white, green, blue, amber, red")
+
+    motions = spec.get("allowed_motion", {})
+    if set(motions) != ALLOWED_MOTION:
+        errors.append("allowed_motion must contain exactly steady, slow_flash, fast_flash")
+    for name, expected in EXPECTED_MOTION.items():
+        if motions.get(name) != expected:
+            errors.append(f"{name}: motion timing must match canonical KISS timing")
+
+    ceiling = int(spec.get("max_visible_on_events_per_rolling_second", 0))
+    if ceiling != 2:
+        errors.append("max_visible_on_events_per_rolling_second must be 2")
+    for name, motion in motions.items():
+        if _events_in_rolling_second(motion) > ceiling:
+            errors.append(f"{name}: exceeds {ceiling} visible on-events in a rolling second")
 
     patterns = spec.get("patterns", {})
     state_defaults = spec.get("state_defaults", {})
-
     for state in spec.get("mandatory_states", []):
         if state not in state_defaults:
             errors.append(f"mandatory state {state} has no default pattern")
-
     for state, pattern_id in state_defaults.items():
-        if pattern_id not in patterns:
-            errors.append(f"state {state} references unknown pattern {pattern_id}")
-
-    for pattern_id, pattern in patterns.items():
-        kind = pattern.get("kind")
-        if kind not in {"steady", "breathe", "pulse"}:
-            errors.append(f"{pattern_id}: unsupported kind {kind!r}")
-            continue
-
-        if kind == "pulse":
-            segments = _segments(pattern)
-            if not segments:
-                errors.append(f"{pattern_id}: pulse pattern has no segments")
-                continue
-            if any(level not in {0, 1} for level, _ in segments):
-                errors.append(f"{pattern_id}: segment levels must be 0 or 1")
-            if any(duration <= 0 for _, duration in segments):
-                errors.append(f"{pattern_id}: segment durations must be positive")
-            total = sum(duration for _, duration in segments)
-            cycle = int(pattern.get("cycle_ms", 0))
-            if total != cycle:
-                errors.append(f"{pattern_id}: segments total {total} ms but cycle is {cycle} ms")
-            if _max_pulses_in_rolling_window(pattern, 1000) > ceiling:
-                errors.append(f"{pattern_id}: exceeds {ceiling} visible pulses in a rolling second")
-            if pattern.get("signature_required") and cycle > window:
-                errors.append(f"{pattern_id}: critical signature cycle {cycle} ms exceeds {window} ms")
-
-    critical_states = spec.get("critical_global_states", [])
-    seen: dict[tuple, str] = {}
-    for state in critical_states:
-        pattern_id = state_defaults.get(state)
-        if pattern_id is None:
-            errors.append(f"critical global state {state} has no default pattern")
-            continue
         pattern = patterns.get(pattern_id)
         if not pattern:
+            errors.append(f"state {state} references unknown pattern {pattern_id}")
             continue
-        if not pattern.get("signature_required"):
-            errors.append(f"critical global state {state} uses non-signature pattern {pattern_id}")
-        signature = _canonical_cycle_signature(pattern)
-        if signature in seen:
-            errors.append(f"critical global states {seen[signature]} and {state} have cyclically equivalent patterns")
-        else:
-            seen[signature] = state
+        if pattern.get("colour") not in ALLOWED_COLOURS:
+            errors.append(f"{pattern_id}: unsupported colour {pattern.get('colour')!r}")
+        if pattern.get("motion") not in ALLOWED_MOTION:
+            errors.append(f"{pattern_id}: unsupported motion {pattern.get('motion')!r}")
+
+    forbidden_tokens = ("double", "triple", "short_long", "long_short", "breathe")
+    for pattern_id, pattern in patterns.items():
+        normalized = str(pattern.get("name", "")).lower()
+        if any(token in normalized for token in forbidden_tokens):
+            errors.append(f"{pattern_id}: Morse-like/counting pattern names are forbidden in v3")
+
+    critical = set(spec.get("critical_global_states", []))
+    secondary = set(spec.get("secondary_carrier_required", []))
+    missing_secondary = sorted(critical - secondary)
+    if missing_secondary:
+        errors.append(f"critical states missing secondary carrier requirement: {missing_secondary}")
+
+    single_global = set(spec.get("single_unlabelled_global_indicator_states", []))
+    if single_global != {"IDLE", "ACTIVE", "WARNING", "ERROR"}:
+        errors.append("single unlabelled global indicator must be limited to IDLE, ACTIVE, WARNING, ERROR")
 
     fallbacks = spec.get("reduced_motion_fallbacks", {})
-    for state in critical_states:
+    for state in critical:
         fallback = fallbacks.get(state)
         if not fallback:
             errors.append(f"critical global state {state} lacks reduced-motion fallback")
@@ -140,23 +98,26 @@ def validate(spec: dict) -> list[str]:
     precedence = spec.get("precedence", [])
     if len(precedence) != len(set(precedence)):
         errors.append("precedence contains duplicate states")
-    for state in critical_states:
+    for state in critical:
         if state not in precedence:
             errors.append(f"critical global state {state} missing from precedence")
 
-    required_names = {
-        "WARNING": "WARNING_SHORT_LONG",
-        "ERROR": "ERROR_LONG_SHORT",
-        "ARMED": "DOUBLE_EQUAL_1HZ",
-        "CONFIRM_REQUIRED": "TRIPLE_EQUAL_1HZ",
-        "RECORD_WRITE": "PULSE_SHORT_1HZ",
-        "CLOCK_LOST": "CLOCK_LOST_WIDE_DOUBLE",
-    }
-    for state, expected_name in required_names.items():
-        pattern_id = state_defaults.get(state)
-        actual_name = patterns.get(pattern_id, {}).get("name")
-        if actual_name != expected_name:
-            errors.append(f"{state}: expected canonical pattern {expected_name}, got {actual_name}")
+    gate = spec.get("recognition_gate", {})
+    if gate.get("legend_max_seconds") != 20:
+        errors.append("recognition gate legend_max_seconds must be 20")
+    if gate.get("observation_ms") != 1000:
+        errors.append("recognition gate observation_ms must be 1000")
+    if gate.get("repetitions_per_state") != 3:
+        errors.append("recognition gate repetitions_per_state must be 3")
+    if gate.get("states") != [
+        "IDLE", "ACTIVE", "ARMED", "CONFIRM_REQUIRED",
+        "RECORD_WRITE", "WARNING", "ERROR"
+    ]:
+        errors.append("recognition gate states must be the seven canonical KISS gate states")
+    if float(gate.get("minimum_overall_accuracy", 0)) != 0.90:
+        errors.append("recognition gate minimum_overall_accuracy must be 0.90")
+    if gate.get("perfect_states") != ["ERROR", "CONFIRM_REQUIRED", "RECORD_WRITE"]:
+        errors.append("recognition gate perfect_states mismatch")
 
     return errors
 
