@@ -20,24 +20,50 @@ The v3 KISS rule is:
 
 A player should not have to decode a Morse-like pulse alphabet to understand an instrument.
 
-## 2. Outcome
+## 2. Human model
 
-An implementation should make important state understandable at a glance.
+Indicators are learned interfaces.
 
-A compliant implementation must:
+The normal sequence is:
 
-- use only the canonical semantic colours and the three motion classes;
+```text
+notice an indicator
+→ investigate what it means
+→ read the product key/manual
+→ remember the convention on later encounters
+```
+
+SLS-1 therefore does **not** require an unfamiliar person to infer an exact state name on first sight.
+
+The indicator has three jobs:
+
+1. make an important condition noticeable;
+2. provide a simple category/urgency cue;
+3. sit in enough context that the exact meaning can be looked up and learned.
+
+The documentation has the complementary job of giving the exact meaning on first encounter.
+
+This is the acceptance model for v3. A one-second blind recognition quiz is not a conformance gate.
+
+## 3. Outcome
+
+A compliant implementation should make important state noticeable, interpretable with its context/documentation, and progressively familiar through repeated use.
+
+It must:
+
+- use only the canonical semantic colours and three motion classes;
 - avoid counted pulses, short–long codes, long–short codes, breathing alphabets, random flicker, and decorative state animations;
 - use a label, symbol, position, shape, or other non-colour carrier for every critical state;
 - keep state indication separate from meters and decorative activity;
 - fail to IDLE or ERROR rather than falsely displaying ARMED, CONFIRM REQUIRED, or RECORD / WRITE;
-- provide a static text/symbol equivalent for animated critical software indicators when reduced motion is requested.
+- provide a static text/symbol equivalent for animated critical software indicators when reduced motion is requested;
+- document the colour categories, motion categories, critical meanings, and local labels/symbols.
 
-The design target is recognition after no more than a tiny rule legend, not memorisation of per-state rhythms.
+The design target is **simple learnability and consistent reuse**, not first-sight semantic guessing.
 
-## 3. KISS vocabulary
+## 4. KISS vocabulary
 
-### 3.1 Colours
+### 4.1 Colours
 
 | Colour | Meaning |
 |---|---|
@@ -47,9 +73,9 @@ The design target is recognition after no more than a tiny rule legend, not memo
 | Amber | attention / staged action |
 | Red | write / fault category |
 
-Colour is the primary category cue. It is never sufficient by itself for a critical state.
+Colour is a category cue. It is never sufficient by itself for a critical state.
 
-### 3.2 Motion
+### 4.2 Motion
 
 SLS-1 v3 permits exactly three temporal behaviours:
 
@@ -63,19 +89,21 @@ No other temporal code is canonical.
 
 SLS-1 v3 forbids double flashes, triple flashes, counted pulse groups, short–long or long–short signatures, breathing as a state code, random flicker, and strobe-like state signalling.
 
-### 3.3 Context
+### 4.3 Context
 
-Exact local meaning should come from the control or indicator context.
+Exact local meaning comes from the control/indicator context and documentation.
 
 Examples:
 
-- an amber steady light next to **ARM** means ARMED;
-- an amber slow-flashing light next to **CONFIRM** means CONFIRM REQUIRED;
-- a red steady light next to **WRITE** means RECORD / WRITE.
+- an amber steady light next to **ARM** tells the user that the ARM condition is active;
+- an amber slow-flashing light next to **CONFIRM** tells the user that confirmation needs attention;
+- a red steady light next to **WRITE** tells the user that the WRITE condition is active.
+
+The lamp does not need to encode the words ARM, CONFIRM, or WRITE in its rhythm. The label already carries that information.
 
 Do not force one anonymous lamp to encode a large state dictionary.
 
-## 4. Canonical states
+## 5. Canonical states
 
 | State | Default visual |
 |---|---|
@@ -92,9 +120,9 @@ Do not force one anonymous lamp to encode a large state dictionary.
 
 The machine-readable source of truth is `standards/data/sls-1-v3.0-kiss.json`.
 
-## 5. Single-indicator rule
+## 6. Single-indicator rule
 
-A single **unlabelled global indicator** may communicate only:
+A single **unlabelled global indicator** may communicate only broad category/state:
 
 - IDLE;
 - ACTIVE;
@@ -105,7 +133,7 @@ If an implementation needs ARMED, CONFIRM REQUIRED, RECORD / WRITE, CLOCK LOST, 
 
 Adding context is preferred to adding a more complicated blink language.
 
-## 6. Precedence
+## 7. Precedence
 
 When one global surface must choose among active states, highest precedence wins:
 
@@ -122,7 +150,7 @@ When one global surface must choose among active states, highest precedence wins
 
 Precedence decides what is shown. It does not relax the secondary-carrier rule.
 
-## 7. Risky/destructive action flow
+## 8. Risky/destructive action flow
 
 For staged risky actions:
 
@@ -142,7 +170,24 @@ WARNING / ERROR on degraded/failing outcome
 
 Lighting does not make an unsafe command safe. The command flow itself must remain deliberate.
 
-## 8. Accessibility and sensory safety
+## 9. Documentation and learning
+
+Every conforming product must provide a concise indicator key in its normal documentation.
+
+The key must identify:
+
+- the product's SLS-1 colours and their categories;
+- steady, slow-flash, and fast-flash meanings;
+- every critical state used by the product;
+- the label, symbol, or position associated with each critical indicator.
+
+A user encountering an unfamiliar indicator should be able to investigate and determine its meaning without decoding a pulse sequence.
+
+The intended learning effect is ordinary interface learning: after looking up a convention, later encounters should require less investigation.
+
+SLS-1 does not require users to memorise the entire vocabulary before operating the product.
+
+## 10. Accessibility and sensory safety
 
 Critical states require at least one non-colour carrier in addition to colour/motion.
 
@@ -154,53 +199,30 @@ For software surfaces with reduced motion:
 
 No SLS-1 v3 pattern may exceed two visible on-events in any rolling second.
 
-## 9. Human-recognition gate
+## 11. Human evidence
 
-The v3 gate asks:
+Abstract browser recognition quizzes are **research tools, not SLS-1 conformance gates**.
 
-> **Can an unfamiliar person identify the important device states at a glance from the complete intended presentation?**
+Two v3 research runs demonstrated why:
 
-The gate must test the complete presentation, not an anonymous light stripped of its required context.
+- a blind anonymous-light test scored 17/21 (81.0%) and mainly failed on exact action-state naming;
+- a complete labelled-panel test shown for one second and hidden before answer scored 14/21 (66.7%), indicating the harness had become a visual-search/short-term-memory task rather than a realistic indicator-use task.
 
-The canonical reference panel uses fixed labelled positions:
+These failures remain valid negative evidence for those exact test designs. They do not justify adding more flash patterns.
 
-```text
-SYSTEM: STATUS | WARNING | ERROR
-ACTION: ARM | CONFIRM | WRITE
-```
+Human evidence should instead come from realistic implementations and ask:
 
-IDLE and ACTIVE share the STATUS position and are distinguished by the simple colour state. Exact critical action states use the labelled ACTION positions required by the KISS design.
+1. Is an important state noticeable during normal use?
+2. When unfamiliar, can the user find and understand the explanation?
+3. Does the documentation resolve the exact meaning correctly?
+4. Does repeated use make the convention easier to recognise without increasing code complexity?
 
-Requirements:
+A browser mock-up may help answer these questions, but it must not substitute an artificial memory test for real use.
 
-- tester has not previously studied or used SLS-1 v3 and has not completed an earlier v3 recognition run;
-- legend exposure is at most 20 seconds;
-- each trial shows the complete panel for exactly one second;
-- seven core states are tested three times each: 21 trials total;
-- first completed run for that exact candidate is the evidence run;
-- no practice, restart, or repeat to improve score.
+## 12. Conformance boundary
 
-Pass requires:
+Repository validation can prove that the v3 machine contract is internally consistent and keeps the KISS vocabulary bounded.
 
-- at least 90% overall accuracy;
-- 100% recognition of ERROR, CONFIRM REQUIRED, and RECORD / WRITE;
-- zero ERROR ↔ ACTIVE confusion;
-- zero RECORD / WRITE ↔ ERROR confusion.
+It cannot prove noticeability on every physical product, colour discrimination for every user, physical LED performance, ambient-light performance, hardware crash/brownout behaviour, player acceptance, learning retention, or multi-implementation adoption.
 
-### 9.1 Superseded blind-light gate
-
-The first v3 candidate tested an anonymous single light and scored 17/21. CONFIRM REQUIRED and RECORD / WRITE were each recognised only once in three attempts.
-
-That run remains valid negative evidence for that exact candidate. It demonstrated that the blind single-light presentation contradicted the v3 design rule by removing the contextual carrier needed for exact critical states.
-
-The corrective gate therefore tests the full labelled presentation. It does **not** add new flash codes.
-
-The browser gate remains human-recognition evidence only. It does not prove real LED brightness, viewing distance, ambient-light performance, or hardware reliability.
-
-## 10. Conformance boundary
-
-Repository validation can prove the v3 machine contract and test harness are internally consistent.
-
-It cannot prove unfamiliar-person recognition, colour discrimination for every user, physical LED performance, ambient-light performance, hardware crash/brownout behaviour, player acceptance, or multi-implementation adoption.
-
-SLS-1 remains **Draft** until its human gate and later physical evidence support a stronger maturity claim.
+SLS-1 remains **Draft** while implementation evidence accumulates. Independent review may assess the specification before such implementation evidence exists, provided claims remain inside this boundary.
