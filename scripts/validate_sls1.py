@@ -25,6 +25,107 @@ REQUIRED_DOCUMENTATION = {
     "local labels or symbols",
 }
 
+EXPECTED_TOP_LEVEL_KEYS = {
+    "standard_id",
+    "version",
+    "design_rule",
+    "human_model",
+    "max_visible_on_events_per_rolling_second",
+    "allowed_colours",
+    "allowed_motion",
+    "mandatory_states",
+    "critical_global_states",
+    "precedence",
+    "patterns",
+    "state_defaults",
+    "secondary_carrier_required",
+    "single_unlabelled_global_indicator_states",
+    "reduced_motion_fallbacks",
+    "documentation",
+    "implementation_evidence",
+}
+EXPECTED_HUMAN_MODEL_KEYS = {
+    "sequence",
+    "first_sight_exact_state_required",
+    "indicator_role",
+    "documentation_role",
+    "learning_goal",
+    "abstract_browser_recognition_gate_required",
+}
+EXPECTED_DOCUMENTATION_KEYS = {"required", "must_define", "lookup_target"}
+EXPECTED_IMPLEMENTATION_EVIDENCE_KEYS = {"abstract_browser_quiz", "real_use_questions"}
+
+EXPECTED_MANDATORY_STATES = [
+    "IDLE",
+    "ACTIVE",
+    "ALT_SHIFTED",
+    "MUTED_BYPASSED",
+    "ARMED",
+    "CONFIRM_REQUIRED",
+    "RECORD_WRITE",
+    "WARNING",
+    "ERROR",
+]
+EXPECTED_CRITICAL_STATES = {
+    "ERROR",
+    "CONFIRM_REQUIRED",
+    "ARMED",
+    "RECORD_WRITE",
+    "WARNING",
+    "CLOCK_LOST",
+}
+EXPECTED_SECONDARY_CARRIER_REQUIRED = {
+    "ARMED",
+    "CONFIRM_REQUIRED",
+    "RECORD_WRITE",
+    "WARNING",
+    "ERROR",
+    "CLOCK_LOST",
+}
+EXPECTED_SINGLE_GLOBAL = {"IDLE", "ACTIVE", "WARNING", "ERROR"}
+EXPECTED_PRECEDENCE = [
+    "ERROR",
+    "CONFIRM_REQUIRED",
+    "ARMED",
+    "RECORD_WRITE",
+    "WARNING",
+    "CLOCK_LOST",
+    "MUTED_BYPASSED",
+    "ALT_SHIFTED",
+    "ACTIVE",
+    "IDLE",
+]
+EXPECTED_PATTERNS = {
+    "K0": {"name": "NEUTRAL_DIM", "colour": "white", "motion": "steady", "brightness": "dim"},
+    "K1": {"name": "NORMAL_STEADY", "colour": "green", "motion": "steady", "brightness": "mid"},
+    "K2": {"name": "MODE_STEADY", "colour": "blue", "motion": "steady", "brightness": "mid"},
+    "K3": {"name": "NEUTRAL_SLOW_FLASH", "colour": "white", "motion": "slow_flash", "brightness": "mid"},
+    "K4": {"name": "ATTENTION_STEADY", "colour": "amber", "motion": "steady", "brightness": "mid"},
+    "K5": {"name": "ATTENTION_SLOW_FLASH", "colour": "amber", "motion": "slow_flash", "brightness": "mid"},
+    "K6": {"name": "WRITE_STEADY", "colour": "red", "motion": "steady", "brightness": "mid"},
+    "K7": {"name": "ATTENTION_FAST_FLASH", "colour": "amber", "motion": "fast_flash", "brightness": "bright"},
+    "K8": {"name": "ERROR_FAST_FLASH", "colour": "red", "motion": "fast_flash", "brightness": "bright"},
+    "K9": {"name": "CLOCK_SLOW_FLASH", "colour": "blue", "motion": "slow_flash", "brightness": "mid"},
+}
+EXPECTED_STATE_DEFAULTS = {
+    "IDLE": "K0",
+    "ACTIVE": "K1",
+    "ALT_SHIFTED": "K2",
+    "MUTED_BYPASSED": "K3",
+    "ARMED": "K4",
+    "CONFIRM_REQUIRED": "K5",
+    "RECORD_WRITE": "K6",
+    "WARNING": "K7",
+    "ERROR": "K8",
+    "CLOCK_PRESENT": "K2",
+    "CLOCK_LOST": "K9",
+    "TRANSPORT_RUN": "K1",
+    "TRANSPORT_STOP": "K0",
+    "SELECTED_FOCUSED": "K2",
+    "LOCKED_HELD": "K4",
+}
+EXPECTED_FALLBACK_KEYS = {"text", "symbol", "animation"}
+
 
 def _events_in_rolling_second(motion: dict) -> int:
     if motion.get("kind") == "steady":
@@ -35,8 +136,23 @@ def _events_in_rolling_second(motion: dict) -> int:
     return (1000 + cycle - 1) // cycle
 
 
+def _report_exact_set(errors: list[str], label: str, actual: object, expected: set[str]) -> None:
+    try:
+        actual_set = set(actual or [])
+    except TypeError:
+        errors.append(f"{label} must be a list containing exactly {sorted(expected)}")
+        return
+    if actual_set != expected:
+        errors.append(f"{label} must contain exactly {sorted(expected)}")
+
+
 def validate(spec: dict) -> list[str]:
     errors: list[str] = []
+
+    if set(spec) != EXPECTED_TOP_LEVEL_KEYS:
+        missing = sorted(EXPECTED_TOP_LEVEL_KEYS - set(spec))
+        extra = sorted(set(spec) - EXPECTED_TOP_LEVEL_KEYS)
+        errors.append(f"top-level contract keys must be exact; missing={missing}, extra={extra}")
 
     if spec.get("standard_id") != "MERRIN-STD-SLS-1":
         errors.append("standard_id must be MERRIN-STD-SLS-1")
@@ -57,59 +173,70 @@ def validate(spec: dict) -> list[str]:
     if ceiling != 2:
         errors.append("max_visible_on_events_per_rolling_second must be 2")
     for name, motion in motions.items():
-        if _events_in_rolling_second(motion) > ceiling:
+        if isinstance(motion, dict) and _events_in_rolling_second(motion) > ceiling:
             errors.append(f"{name}: exceeds {ceiling} visible on-events in a rolling second")
 
+    if spec.get("mandatory_states") != EXPECTED_MANDATORY_STATES:
+        errors.append("mandatory_states must match the canonical SLS-1 v3 state list exactly")
+
     patterns = spec.get("patterns", {})
-    state_defaults = spec.get("state_defaults", {})
-    for state in spec.get("mandatory_states", []):
-        if state not in state_defaults:
-            errors.append(f"mandatory state {state} has no default pattern")
-    for state, pattern_id in state_defaults.items():
+    if set(patterns) != set(EXPECTED_PATTERNS):
+        missing = sorted(set(EXPECTED_PATTERNS) - set(patterns))
+        extra = sorted(set(patterns) - set(EXPECTED_PATTERNS))
+        errors.append(f"patterns must contain exactly canonical K0-K9; missing={missing}, extra={extra}")
+    for pattern_id, expected in EXPECTED_PATTERNS.items():
         pattern = patterns.get(pattern_id)
-        if not pattern:
-            errors.append(f"state {state} references unknown pattern {pattern_id}")
-            continue
-        if pattern.get("colour") not in ALLOWED_COLOURS:
-            errors.append(f"{pattern_id}: unsupported colour {pattern.get('colour')!r}")
-        if pattern.get("motion") not in ALLOWED_MOTION:
-            errors.append(f"{pattern_id}: unsupported motion {pattern.get('motion')!r}")
+        if pattern != expected:
+            errors.append(f"{pattern_id}: pattern schema/value must match canonical KISS definition exactly")
+
+    state_defaults = spec.get("state_defaults", {})
+    if state_defaults != EXPECTED_STATE_DEFAULTS:
+        errors.append("state_defaults must match the canonical state-to-pattern mapping exactly")
 
     forbidden_tokens = ("double", "triple", "short_long", "long_short", "breathe")
     for pattern_id, pattern in patterns.items():
+        if not isinstance(pattern, dict):
+            errors.append(f"{pattern_id}: pattern must be an object")
+            continue
         normalized = str(pattern.get("name", "")).lower()
         if any(token in normalized for token in forbidden_tokens):
             errors.append(f"{pattern_id}: Morse-like/counting pattern names are forbidden in v3")
 
-    critical = set(spec.get("critical_global_states", []))
-    secondary = set(spec.get("secondary_carrier_required", []))
-    missing_secondary = sorted(critical - secondary)
-    if missing_secondary:
-        errors.append(f"critical states missing secondary carrier requirement: {missing_secondary}")
+    _report_exact_set(errors, "critical_global_states", spec.get("critical_global_states"), EXPECTED_CRITICAL_STATES)
+    _report_exact_set(
+        errors,
+        "secondary_carrier_required",
+        spec.get("secondary_carrier_required"),
+        EXPECTED_SECONDARY_CARRIER_REQUIRED,
+    )
 
     single_global = set(spec.get("single_unlabelled_global_indicator_states", []))
-    if single_global != {"IDLE", "ACTIVE", "WARNING", "ERROR"}:
+    if single_global != EXPECTED_SINGLE_GLOBAL:
         errors.append("single unlabelled global indicator must be limited to IDLE, ACTIVE, WARNING, ERROR")
 
     fallbacks = spec.get("reduced_motion_fallbacks", {})
-    for state in critical:
+    if set(fallbacks) != EXPECTED_CRITICAL_STATES:
+        errors.append("reduced_motion_fallbacks must cover exactly the canonical critical states")
+    for state in EXPECTED_CRITICAL_STATES:
         fallback = fallbacks.get(state)
-        if not fallback:
+        if not isinstance(fallback, dict):
             errors.append(f"critical global state {state} lacks reduced-motion fallback")
             continue
+        if set(fallback) != EXPECTED_FALLBACK_KEYS:
+            errors.append(f"{state}: reduced-motion fallback keys must be exactly text, symbol, animation")
         if fallback.get("animation") != "none":
             errors.append(f"{state}: reduced-motion fallback must set animation=none")
         if not fallback.get("text"):
             errors.append(f"{state}: reduced-motion fallback needs text")
+        if not fallback.get("symbol"):
+            errors.append(f"{state}: reduced-motion fallback needs symbol")
 
-    precedence = spec.get("precedence", [])
-    if len(precedence) != len(set(precedence)):
-        errors.append("precedence contains duplicate states")
-    for state in critical:
-        if state not in precedence:
-            errors.append(f"critical global state {state} missing from precedence")
+    if spec.get("precedence") != EXPECTED_PRECEDENCE:
+        errors.append("precedence must match the canonical SLS-1 v3 precedence exactly")
 
     human = spec.get("human_model", {})
+    if set(human) != EXPECTED_HUMAN_MODEL_KEYS:
+        errors.append("human_model keys must match the canonical v3 human-use contract exactly")
     if human.get("sequence") != EXPECTED_HUMAN_SEQUENCE:
         errors.append("human_model sequence must be notice, investigate, lookup, learned_recognition")
     if human.get("first_sight_exact_state_required") is not False:
@@ -127,6 +254,8 @@ def validate(spec: dict) -> list[str]:
         errors.append("recognition_gate is superseded; abstract quiz gates are not normative in v3")
 
     documentation = spec.get("documentation", {})
+    if set(documentation) != EXPECTED_DOCUMENTATION_KEYS:
+        errors.append("documentation keys must match the canonical v3 documentation contract exactly")
     if documentation.get("required") is not True:
         errors.append("product indicator documentation must be required")
     if set(documentation.get("must_define", [])) != REQUIRED_DOCUMENTATION:
@@ -135,6 +264,8 @@ def validate(spec: dict) -> list[str]:
         errors.append("documentation must define an unfamiliar-indicator lookup target")
 
     evidence = spec.get("implementation_evidence", {})
+    if set(evidence) != EXPECTED_IMPLEMENTATION_EVIDENCE_KEYS:
+        errors.append("implementation_evidence keys must match the canonical v3 evidence contract exactly")
     if evidence.get("abstract_browser_quiz") != "not a conformance gate":
         errors.append("implementation evidence must mark abstract browser quizzes as non-conformance research")
     questions = evidence.get("real_use_questions", [])
