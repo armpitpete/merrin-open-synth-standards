@@ -2,7 +2,14 @@
   "standard_id": "MERRIN-STD-SLS-1",
   "version": "v3.0-draft",
   "design_rule": "KISS: colour carries category, motion carries urgency, context carries exact local meaning",
-  "observation_ms": 1000,
+  "human_model": {
+    "sequence": ["notice", "investigate", "lookup", "learned_recognition"],
+    "first_sight_exact_state_required": false,
+    "indicator_role": "make a labelled or contextual condition visibly active; do not encode the whole state name in a blink alphabet",
+    "documentation_role": "provide the exact meaning on first encounter",
+    "learning_goal": "after lookup, the same convention should be easier to recognise on later encounters",
+    "abstract_browser_recognition_gate_required": false
+  },
   "max_visible_on_events_per_rolling_second": 2,
   "allowed_colours": ["white", "green", "blue", "amber", "red"],
   "allowed_motion": {
@@ -52,25 +59,18 @@
     "ERROR": {"text": "Error", "symbol": "×", "animation": "none"},
     "CLOCK_LOST": {"text": "Clock lost", "symbol": "C", "animation": "none"}
   },
-  "recognition_gate": {
-    "name": "KISS contextual unfamiliar-person recognition",
-    "tester_requirement": "tester must not have previously studied or used SLS-1 v3 or completed an earlier SLS-1 v3 recognition run",
-    "legend_max_seconds": 20,
-    "observation_ms": 1000,
-    "presentation": "complete labelled panel",
-    "slots": {
-      "IDLE": {"position": "SYSTEM", "label": "STATUS"},
-      "ACTIVE": {"position": "SYSTEM", "label": "STATUS"},
-      "ARMED": {"position": "ACTION", "label": "ARM"},
-      "CONFIRM_REQUIRED": {"position": "ACTION", "label": "CONFIRM"},
-      "RECORD_WRITE": {"position": "ACTION", "label": "WRITE"},
-      "WARNING": {"position": "SYSTEM", "label": "WARNING"},
-      "ERROR": {"position": "SYSTEM", "label": "ERROR"}
-    },
-    "states": ["IDLE", "ACTIVE", "ARMED", "CONFIRM_REQUIRED", "RECORD_WRITE", "WARNING", "ERROR"],
-    "repetitions_per_state": 3,
-    "minimum_overall_accuracy": 0.9,
-    "perfect_states": ["ERROR", "CONFIRM_REQUIRED", "RECORD_WRITE"],
-    "prohibited_confusions": [["ERROR", "ACTIVE"], ["RECORD_WRITE", "ERROR"]]
+  "documentation": {
+    "required": true,
+    "must_define": ["colour categories", "motion categories", "critical state meanings", "local labels or symbols"],
+    "lookup_target": "a user encountering an unfamiliar indicator can determine its exact meaning from the product documentation without decoding a pulse sequence"
+  },
+  "implementation_evidence": {
+    "abstract_browser_quiz": "not a conformance gate",
+    "real_use_questions": [
+      "Is an important state noticeable during realistic use?",
+      "Can the user find the explanation when the indicator is unfamiliar?",
+      "Does the documentation resolve the exact meaning correctly?",
+      "Does repeated use make the convention easier to recognise without adding a more complex code?"
+    ]
   }
 }
