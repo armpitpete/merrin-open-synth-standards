@@ -82,7 +82,7 @@ jobs:
       # Security boundary: the model is the final step in this job.
       - name: Run independent Proofkeeper semantic falsifier
         id: codex
-        uses: openai/codex-action@52fe01ec70a42f454c9d2ebd47598f9fd6893d56
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e # current v1 as of 2026-08-29
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           working-directory: ${{ github.workspace }}/target
@@ -207,7 +207,7 @@ jobs:
               'workflow_run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
               'model': os.environ['MODEL'],
               'effort': os.environ['EFFORT'],
-              'codex_action_sha': '52fe01ec70a42f454c9d2ebd47598f9fd6893d56',
+              'codex_action_sha': '86365089eb2b84e0a8fb0717b304f8bdcb13b20e',
               'verdict': result['verdict'],
               'authority_granted': False,
               'automatic_actions': [],
