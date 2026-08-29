@@ -17,7 +17,23 @@ EXPECTED_MOTION = {
     "slow_flash": {"kind": "flash", "cycle_ms": 1000, "on_ms": 500},
     "fast_flash": {"kind": "flash", "cycle_ms": 500, "on_ms": 250},
 }
+EXPECTED_DESIGN_RULE = "KISS: colour carries category, motion carries urgency, context carries exact local meaning"
 EXPECTED_HUMAN_SEQUENCE = ["notice", "investigate", "lookup", "learned_recognition"]
+EXPECTED_INDICATOR_ROLE = (
+    "make a labelled or contextual condition visibly active; do not encode the whole state name in a blink alphabet"
+)
+EXPECTED_DOCUMENTATION_ROLE = "provide the exact meaning on first encounter"
+EXPECTED_LEARNING_GOAL = "after lookup, the same convention should be easier to recognise on later encounters"
+EXPECTED_LOOKUP_TARGET = (
+    "a user encountering an unfamiliar indicator can determine its exact meaning from the product documentation "
+    "without decoding a pulse sequence"
+)
+EXPECTED_REAL_USE_QUESTIONS = [
+    "Is an important state noticeable during realistic use?",
+    "Can the user find the explanation when the indicator is unfamiliar?",
+    "Does the documentation resolve the exact meaning correctly?",
+    "Does repeated use make the convention easier to recognise without adding a more complex code?",
+]
 REQUIRED_DOCUMENTATION = {
     "colour categories",
     "motion categories",
@@ -158,6 +174,8 @@ def validate(spec: dict) -> list[str]:
         errors.append("standard_id must be MERRIN-STD-SLS-1")
     if spec.get("version") != "v3.0-draft":
         errors.append("version must be v3.0-draft")
+    if spec.get("design_rule") != EXPECTED_DESIGN_RULE:
+        errors.append("design_rule must match the canonical SLS-1 v3 KISS rule exactly")
 
     if set(spec.get("allowed_colours", [])) != ALLOWED_COLOURS:
         errors.append("allowed_colours must be exactly white, green, blue, amber, red")
@@ -243,12 +261,12 @@ def validate(spec: dict) -> list[str]:
         errors.append("first-sight exact-state recognition must not be required")
     if human.get("abstract_browser_recognition_gate_required") is not False:
         errors.append("abstract browser recognition must not be a conformance gate")
-    if not human.get("indicator_role"):
-        errors.append("human_model must define the indicator role")
-    if not human.get("documentation_role"):
-        errors.append("human_model must define the documentation role")
-    if not human.get("learning_goal"):
-        errors.append("human_model must define the learning goal")
+    if human.get("indicator_role") != EXPECTED_INDICATOR_ROLE:
+        errors.append("human_model indicator_role must match the canonical v3 role exactly")
+    if human.get("documentation_role") != EXPECTED_DOCUMENTATION_ROLE:
+        errors.append("human_model documentation_role must match the canonical v3 role exactly")
+    if human.get("learning_goal") != EXPECTED_LEARNING_GOAL:
+        errors.append("human_model learning_goal must match the canonical v3 goal exactly")
 
     if "recognition_gate" in spec:
         errors.append("recognition_gate is superseded; abstract quiz gates are not normative in v3")
@@ -260,17 +278,16 @@ def validate(spec: dict) -> list[str]:
         errors.append("product indicator documentation must be required")
     if set(documentation.get("must_define", [])) != REQUIRED_DOCUMENTATION:
         errors.append("documentation must define colour, motion, critical meanings, and local labels/symbols")
-    if not documentation.get("lookup_target"):
-        errors.append("documentation must define an unfamiliar-indicator lookup target")
+    if documentation.get("lookup_target") != EXPECTED_LOOKUP_TARGET:
+        errors.append("documentation lookup_target must match the canonical v3 lookup requirement exactly")
 
     evidence = spec.get("implementation_evidence", {})
     if set(evidence) != EXPECTED_IMPLEMENTATION_EVIDENCE_KEYS:
         errors.append("implementation_evidence keys must match the canonical v3 evidence contract exactly")
     if evidence.get("abstract_browser_quiz") != "not a conformance gate":
         errors.append("implementation evidence must mark abstract browser quizzes as non-conformance research")
-    questions = evidence.get("real_use_questions", [])
-    if len(questions) != 4 or not all(isinstance(question, str) and question.strip() for question in questions):
-        errors.append("implementation evidence must define four real-use questions")
+    if evidence.get("real_use_questions") != EXPECTED_REAL_USE_QUESTIONS:
+        errors.append("implementation evidence real_use_questions must match the canonical v3 questions exactly")
 
     return errors
 
