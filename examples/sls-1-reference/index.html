@@ -47,7 +47,7 @@
 </main>
 
 <script type="module">
-  import {colourCss, patternLevelAt, resolveState, statePresentation} from "./sls.mjs";
+  import {colourCss, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "./sls.mjs";
 
   const spec = await fetch("../../standards/data/sls-1-v3.0-kiss.json").then((response) => {
     if (!response.ok) throw new Error(`Failed to load contract: ${response.status}`);
@@ -94,12 +94,18 @@
     stateText.textContent=state.replaceAll("_"," ");
     patternText.textContent=`${presentation.pattern.name} — ${presentation.pattern.colour} / ${presentation.pattern.motion}`;
     indicator.style.background=colourCss(presentation.pattern.colour);
-    if(presentation.reducedMotion && presentation.fallback){
-      reducedText.hidden=false;
-      reducedText.textContent=`${presentation.fallback.symbol} ${presentation.fallback.text}`;
-      indicator.style.opacity="0.72";
+    if(presentation.reducedMotion){
+      indicator.style.opacity=String(staticPatternLevel(presentation.pattern));
+      if(presentation.fallback){
+        reducedText.hidden=false;
+        reducedText.textContent=`${presentation.fallback.symbol} ${presentation.fallback.text}`;
+      }else{
+        reducedText.hidden=true;
+        reducedText.textContent="";
+      }
     }else{
       reducedText.hidden=true;
+      reducedText.textContent="";
     }
   }
 
