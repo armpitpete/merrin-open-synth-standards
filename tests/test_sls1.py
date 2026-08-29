@@ -62,22 +62,34 @@ class SLS1ValidatorTests(unittest.TestCase):
             "single unlabelled global indicator must be limited",
         )
 
-    def test_rejects_expanded_human_gate(self) -> None:
+    def test_rejects_first_sight_exact_state_requirement(self) -> None:
         self.assert_invalid(
-            lambda data: data["recognition_gate"].update(repetitions_per_state=10),
-            "recognition gate repetitions_per_state must be 3",
+            lambda data: data["human_model"].update(first_sight_exact_state_required=True),
+            "first-sight exact-state recognition must not be required",
         )
 
-    def test_rejects_blind_single_light_gate(self) -> None:
+    def test_rejects_abstract_quiz_as_gate(self) -> None:
         self.assert_invalid(
-            lambda data: data["recognition_gate"].update(presentation="blind single light"),
-            "recognition gate must use the complete labelled panel",
+            lambda data: data["human_model"].update(abstract_browser_recognition_gate_required=True),
+            "abstract browser recognition must not be a conformance gate",
         )
 
-    def test_rejects_missing_confirm_context(self) -> None:
+    def test_rejects_reintroduced_recognition_gate(self) -> None:
         self.assert_invalid(
-            lambda data: data["recognition_gate"]["slots"]["CONFIRM_REQUIRED"].update(label="STATUS"),
-            "recognition gate slots must match the fixed KISS context map",
+            lambda data: data.update(recognition_gate={"name": "blind quiz"}),
+            "recognition_gate is superseded",
+        )
+
+    def test_rejects_missing_documentation_key(self) -> None:
+        self.assert_invalid(
+            lambda data: data["documentation"]["must_define"].remove("critical state meanings"),
+            "documentation must define colour, motion, critical meanings, and local labels/symbols",
+        )
+
+    def test_rejects_wrong_human_sequence(self) -> None:
+        self.assert_invalid(
+            lambda data: data["human_model"].update(sequence=["memorise", "decode"]),
+            "human_model sequence must be notice, investigate, lookup, learned_recognition",
         )
 
 
