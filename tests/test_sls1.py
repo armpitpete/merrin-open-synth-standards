@@ -108,6 +108,44 @@ class SLS1ValidatorTests(unittest.TestCase):
             "precedence must match the canonical SLS-1 v3 precedence exactly",
         )
 
+    def test_rejects_rewritten_design_rule(self) -> None:
+        self.assert_invalid(
+            lambda data: data.update(design_rule="Count three pulses to identify ERROR"),
+            "design_rule must match the canonical SLS-1 v3 KISS rule exactly",
+        )
+
+    def test_rejects_rewritten_indicator_role(self) -> None:
+        self.assert_invalid(
+            lambda data: data["human_model"].update(indicator_role="encode the complete state in pulse counts"),
+            "human_model indicator_role must match the canonical v3 role exactly",
+        )
+
+    def test_rejects_rewritten_documentation_role(self) -> None:
+        self.assert_invalid(
+            lambda data: data["human_model"].update(documentation_role="documentation is optional"),
+            "human_model documentation_role must match the canonical v3 role exactly",
+        )
+
+    def test_rejects_rewritten_learning_goal(self) -> None:
+        self.assert_invalid(
+            lambda data: data["human_model"].update(learning_goal="memorise pulse counts before use"),
+            "human_model learning_goal must match the canonical v3 goal exactly",
+        )
+
+    def test_rejects_rewritten_lookup_target(self) -> None:
+        self.assert_invalid(
+            lambda data: data["documentation"].update(lookup_target="no lookup is needed"),
+            "documentation lookup_target must match the canonical v3 lookup requirement exactly",
+        )
+
+    def test_rejects_rewritten_real_use_questions(self) -> None:
+        self.assert_invalid(
+            lambda data: data["implementation_evidence"]["real_use_questions"].__setitem__(
+                0, "Can a stranger name the exact state after one second?"
+            ),
+            "implementation evidence real_use_questions must match the canonical v3 questions exactly",
+        )
+
     def test_rejects_first_sight_exact_state_requirement(self) -> None:
         self.assert_invalid(
             lambda data: data["human_model"].update(first_sight_exact_state_required=True),
