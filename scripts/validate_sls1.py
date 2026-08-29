@@ -150,6 +150,31 @@ EXPECTED_REDUCED_MOTION_FALLBACKS = {
 }
 
 
+class DuplicateJSONMemberError(ValueError):
+    """Raised when a JSON object contains the same member name more than once."""
+
+
+def _reject_duplicate_object_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise DuplicateJSONMemberError(f"duplicate JSON object member: {key!r}")
+        result[key] = value
+    return result
+
+
+def loads_contract(text: str) -> dict:
+    """Parse an SLS-1 contract without allowing ambiguous duplicate object members."""
+    spec = json.loads(text, object_pairs_hook=_reject_duplicate_object_pairs)
+    if not isinstance(spec, dict):
+        raise ValueError("SLS-1 contract root must be a JSON object")
+    return spec
+
+
+def load_contract(path: Path = DEFAULT_SPEC) -> dict:
+    return loads_contract(path.read_text(encoding="utf-8"))
+
+
 def _events_in_rolling_second(motion: dict) -> int:
     if motion.get("kind") == "steady":
         return 0
@@ -293,7 +318,11 @@ def validate(spec: dict) -> list[str]:
 
 def main(argv: list[str]) -> int:
     path = Path(argv[1]) if len(argv) > 1 else DEFAULT_SPEC
-    spec = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        spec = load_contract(path)
+    except (json.JSONDecodeError, DuplicateJSONMemberError, ValueError) as exc:
+        print(f"FAIL: invalid JSON contract: {exc}")
+        return 1
     errors = validate(spec)
     if errors:
         for error in errors:
