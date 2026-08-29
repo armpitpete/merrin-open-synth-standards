@@ -41,4 +41,13 @@ The following are not part of v3:
 
 Do not reuse v1/v2 recognition results as v3 evidence.
 
-The v3 gate is a separate unfamiliar-person test defined in `standards/data/sls-1-v3.0-kiss.json`.
+The two v3 unfamiliar-person browser recognition exercises remain preserved as design-research evidence, but they are **not a conformance gate**. The normative human-use model is:
+
+```text
+notice
+→ investigate
+→ lookup
+→ learned recognition
+```
+
+Implementations should make important states noticeable, provide contextual carriers for exact critical meanings, and document the colour/motion conventions so an unfamiliar indicator can be looked up. Real-use evidence belongs to later implementation testing rather than an abstract exact-naming browser quiz.
