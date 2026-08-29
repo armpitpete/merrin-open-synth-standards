@@ -1,3 +1,116 @@
+export function parseJsonStrict(text) {
+  if (typeof text !== "string") throw new TypeError("JSON source must be a string");
+
+  let index = 0;
+
+  function fail(message) {
+    throw new SyntaxError(`${message} at position ${index}`);
+  }
+
+  function skipWhitespace() {
+    while (index < text.length && /[\t\n\r ]/.test(text[index])) index += 1;
+  }
+
+  function parseStringToken() {
+    if (text[index] !== '"') fail("Expected JSON string");
+    const start = index;
+    index += 1;
+    while (index < text.length) {
+      const char = text[index];
+      if (char === '"') {
+        index += 1;
+        return JSON.parse(text.slice(start, index));
+      }
+      if (char === "\\") {
+        index += 2;
+        continue;
+      }
+      index += 1;
+    }
+    fail("Unterminated JSON string");
+  }
+
+  function parsePrimitive() {
+    const start = index;
+    while (index < text.length && !/[\t\n\r ,}\]]/.test(text[index])) index += 1;
+    if (start === index) fail("Expected JSON value");
+    JSON.parse(text.slice(start, index));
+  }
+
+  function parseArray() {
+    index += 1;
+    skipWhitespace();
+    if (text[index] === "]") {
+      index += 1;
+      return;
+    }
+    while (true) {
+      parseValue();
+      skipWhitespace();
+      if (text[index] === ",") {
+        index += 1;
+        skipWhitespace();
+        continue;
+      }
+      if (text[index] === "]") {
+        index += 1;
+        return;
+      }
+      fail("Expected ',' or ']' in JSON array");
+    }
+  }
+
+  function parseObject() {
+    index += 1;
+    skipWhitespace();
+    const keys = new Set();
+    if (text[index] === "}") {
+      index += 1;
+      return;
+    }
+    while (true) {
+      const key = parseStringToken();
+      if (keys.has(key)) throw new SyntaxError(`Duplicate JSON object member: ${key}`);
+      keys.add(key);
+      skipWhitespace();
+      if (text[index] !== ":") fail("Expected ':' after JSON object member");
+      index += 1;
+      skipWhitespace();
+      parseValue();
+      skipWhitespace();
+      if (text[index] === ",") {
+        index += 1;
+        skipWhitespace();
+        continue;
+      }
+      if (text[index] === "}") {
+        index += 1;
+        return;
+      }
+      fail("Expected ',' or '}' in JSON object");
+    }
+  }
+
+  function parseValue() {
+    skipWhitespace();
+    if (index >= text.length) fail("Expected JSON value");
+    const char = text[index];
+    if (char === "{") return parseObject();
+    if (char === "[") return parseArray();
+    if (char === '"') {
+      parseStringToken();
+      return;
+    }
+    parsePrimitive();
+  }
+
+  skipWhitespace();
+  parseValue();
+  skipWhitespace();
+  if (index !== text.length) fail("Unexpected trailing JSON content");
+  return JSON.parse(text);
+}
+
 export function resolveState(activeStates, precedence) {
   const active = new Set(activeStates);
   for (const state of precedence) {
