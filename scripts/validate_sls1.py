@@ -17,6 +17,19 @@ EXPECTED_MOTION = {
     "slow_flash": {"kind": "flash", "cycle_ms": 1000, "on_ms": 500},
     "fast_flash": {"kind": "flash", "cycle_ms": 500, "on_ms": 250},
 }
+GATE_STATES = [
+    "IDLE", "ACTIVE", "ARMED", "CONFIRM_REQUIRED",
+    "RECORD_WRITE", "WARNING", "ERROR"
+]
+EXPECTED_GATE_SLOTS = {
+    "IDLE": {"position": "SYSTEM", "label": "STATUS"},
+    "ACTIVE": {"position": "SYSTEM", "label": "STATUS"},
+    "ARMED": {"position": "ACTION", "label": "ARM"},
+    "CONFIRM_REQUIRED": {"position": "ACTION", "label": "CONFIRM"},
+    "RECORD_WRITE": {"position": "ACTION", "label": "WRITE"},
+    "WARNING": {"position": "SYSTEM", "label": "WARNING"},
+    "ERROR": {"position": "SYSTEM", "label": "ERROR"},
+}
 
 
 def _events_in_rolling_second(motion: dict) -> int:
@@ -103,16 +116,19 @@ def validate(spec: dict) -> list[str]:
             errors.append(f"critical global state {state} missing from precedence")
 
     gate = spec.get("recognition_gate", {})
+    if gate.get("name") != "KISS contextual unfamiliar-person recognition":
+        errors.append("recognition gate must test the contextual presentation")
     if gate.get("legend_max_seconds") != 20:
         errors.append("recognition gate legend_max_seconds must be 20")
     if gate.get("observation_ms") != 1000:
         errors.append("recognition gate observation_ms must be 1000")
+    if gate.get("presentation") != "complete labelled panel":
+        errors.append("recognition gate must use the complete labelled panel")
+    if gate.get("slots") != EXPECTED_GATE_SLOTS:
+        errors.append("recognition gate slots must match the fixed KISS context map")
     if gate.get("repetitions_per_state") != 3:
         errors.append("recognition gate repetitions_per_state must be 3")
-    if gate.get("states") != [
-        "IDLE", "ACTIVE", "ARMED", "CONFIRM_REQUIRED",
-        "RECORD_WRITE", "WARNING", "ERROR"
-    ]:
+    if gate.get("states") != GATE_STATES:
         errors.append("recognition gate states must be the seven canonical KISS gate states")
     if float(gate.get("minimum_overall_accuracy", 0)) != 0.90:
         errors.append("recognition gate minimum_overall_accuracy must be 0.90")
