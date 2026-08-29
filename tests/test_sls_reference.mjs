@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import {colourCss, patternLevelAt, resolveState, statePresentation} from "../examples/sls-1-reference/sls.mjs";
+import {colourCss, patternLevelAt, resolveState, statePresentation, staticPatternLevel} from "../examples/sls-1-reference/sls.mjs";
 
 const spec = JSON.parse(fs.readFileSync(new URL("../standards/data/sls-1-v3.0-kiss.json", import.meta.url), "utf8"));
 
@@ -14,6 +14,7 @@ assert.throws(() => colourCss("purple"), /Unknown colour/);
 
 const armed = spec.patterns[spec.state_defaults.ARMED];
 assert.equal(patternLevelAt(armed, 0, spec), 0.72);
+assert.equal(staticPatternLevel(armed), 0.72);
 
 const confirm = spec.patterns[spec.state_defaults.CONFIRM_REQUIRED];
 assert.equal(patternLevelAt(confirm, 0, spec), 1);
@@ -30,6 +31,16 @@ for (const state of spec.critical_global_states) {
   assert.equal(reduced.fallback.animation, "none");
   assert.ok(reduced.fallback.text.length > 0);
 }
+
+const mutedReduced = statePresentation(spec, "MUTED_BYPASSED", true);
+assert.equal(mutedReduced.reducedMotion, true);
+assert.equal(mutedReduced.fallback, null);
+assert.equal(spec.allowed_motion[mutedReduced.pattern.motion].kind, "flash");
+assert.equal(staticPatternLevel(mutedReduced.pattern), 0.72);
+
+const activeReduced = statePresentation(spec, "ACTIVE", true);
+assert.equal(activeReduced.reducedMotion, false);
+assert.equal(activeReduced.fallback, null);
 
 assert.deepEqual(spec.human_model.sequence, ["notice", "investigate", "lookup", "learned_recognition"]);
 assert.equal(spec.human_model.first_sight_exact_state_required, false);
